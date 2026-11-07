@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/auth";
-import { getPlanSeed } from "@/lib/plans";
-import { addDays, slugify } from "@/lib/utils";
+import { slugify } from "@/lib/utils";
 import { serializeThemeConfig, THEME_PRESETS } from "@/lib/theme";
+import { BUILTIN_APPS } from "@/lib/apps";
 import { DEFAULT_SETTINGS, serializeSetting } from "@/lib/settings-defaults";
 import type { FormState } from "@/lib/types";
 
@@ -20,8 +20,7 @@ const signupSchema = z.object({
   name: z.string().min(2, "Enter your name."),
   email: z.string().email("Enter a valid email."),
   password: z.string().min(8, "Password must be at least 8 characters."),
-  shopName: z.string().min(2, "Enter a store name.").max(60),
-  plan: z.string().min(1)
+  shopName: z.string().min(2, "Enter a store name.").max(60)
 });
 
 function getString(formData: FormData, key: string): string {
@@ -69,44 +68,17 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
     name: getString(formData, "name"),
     email: getString(formData, "email").toLowerCase(),
     password: getString(formData, "password"),
-    shopName: getString(formData, "shopName"),
-    plan: getString(formData, "plan")
+    shopName: getString(formData, "shopName")
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   }
 
-  const plan = getPlanSeed(parsed.data.plan);
-  if (!plan) return { error: "Choose a valid plan." };
-
   const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existing) return { error: "An account with that email already exists. Try logging in." };
 
-  let planRecord = await prisma.plan.findUnique({ where: { code: plan.code } });
-  if (!planRecord) {
-    planRecord = await prisma.plan.create({
-      data: {
-        id: plan.id,
-        code: plan.code,
-        name: plan.name,
-        description: plan.description,
-        priceMonthly: plan.priceMonthly,
-        trialDays: plan.trialDays,
-        productLimit: plan.productLimit,
-        staffLimit: plan.staffLimit,
-        transactionFeeBps: plan.transactionFeeBps,
-        cardRateBps: plan.cardRateBps,
-        cardFixedCents: plan.cardFixedCents,
-        features: plan.features.join("\n"),
-        sortOrder: plan.sortOrder
-      }
-    });
-  }
-
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const slug = await uniqueShopSlug(parsed.data.shopName);
-  const now = new Date();
-  const periodEnd = addDays(now, 30);
 
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
@@ -126,25 +98,23 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
     await tx.membership.create({
       data: { userId: user.id, shopId: shop.id, role: "OWNER" }
     });
-    await tx.subscription.create({
-      data: {
-        shopId: shop.id,
-        planId: planRecord.id,
-        status: "TRIALING",
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        trialEndsAt: addDays(now, plan.trialDays)
-      }
-    });
-    await tx.theme.create({
-      data: {
-        shopId: shop.id,
-        name: "Dawn",
-        role: "MAIN",
-        preset: "dawn",
-        configJson: serializeThemeConfig(THEME_PRESETS.dawn.config)
-      }
-    });
+    for (const [preset, definition] of Object.entries(THEME_PRESETS)) {
+      await tx.theme.create({
+        data: {
+          shopId: shop.id,
+          name: definition.name,
+          role: preset === "classic" ? "MAIN" : "UNPUBLISHED",
+          preset,
+          configJson: serializeThemeConfig(definition.config)
+        }
+      });
+    }
+    for (const app of BUILTIN_APPS) {
+      await tx.app.upsert({ where: { id: app.id }, create: app, update: app });
+      await tx.appInstallation.create({
+        data: { shopId: shop.id, appId: app.id, status: "ACTIVE" }
+      });
+    }
     await tx.shopSetting.createMany({
       data: Object.entries(DEFAULT_SETTINGS).map(([key, value]) => ({
         shopId: shop.id,

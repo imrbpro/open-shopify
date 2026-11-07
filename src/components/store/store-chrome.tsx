@@ -3,11 +3,13 @@ import type { StoreContext } from "@/lib/storefront";
 import { isAppInstalled, storeHref } from "@/lib/storefront";
 import { CartBadge } from "./cart-badge";
 import { NewsletterForm } from "./newsletter-form";
+import { WishlistBadge } from "./wishlist";
 import { Icon } from "@/components/icons";
 
 export function StoreHeader({ store }: { store: StoreContext }) {
   const { shop, config } = store;
   const links = config.nav.map((item) => ({ label: item.label, href: storeHref(shop.slug, item.href) }));
+  const showWishlist = isAppInstalled(store, "wishlist");
 
   return (
     <header className="border-b store-border" style={{ background: "var(--os-bg)" }}>
@@ -43,6 +45,7 @@ export function StoreHeader({ store }: { store: StoreContext }) {
             <Icon name="search" className="h-4 w-4" />
             <span className="hidden sm:inline">Search</span>
           </Link>
+          {showWishlist ? <WishlistBadge slug={shop.slug} /> : null}
           <CartBadge slug={shop.slug} />
         </div>
       </div>
@@ -63,7 +66,8 @@ export function StoreHeader({ store }: { store: StoreContext }) {
 
 export function StoreFooter({ store }: { store: StoreContext }) {
   const { shop, config, settings } = store;
-  const showNewsletter = settings.newsletterEnabled && isAppInstalled(store, "klaviyo-email");
+  const showNewsletter = settings.newsletterEnabled && isAppInstalled(store, "email-marketing");
+  const showWishlist = isAppInstalled(store, "wishlist");
   const links = config.nav.map((item) => ({ label: item.label, href: storeHref(shop.slug, item.href) }));
 
   return (
@@ -93,6 +97,13 @@ export function StoreFooter({ store }: { store: StoreContext }) {
                 Order lookup
               </Link>
             </li>
+            {showWishlist ? (
+              <li>
+                <Link href={`/s/${shop.slug}/wishlist`} className="text-sm transition-opacity hover:opacity-70">
+                  Wishlist
+                </Link>
+              </li>
+            ) : null}
             <li>
               <Link href={`/s/${shop.slug}/pages/contact`} className="text-sm transition-opacity hover:opacity-70">
                 Contact
@@ -126,7 +137,7 @@ export function StoreFooter({ store }: { store: StoreContext }) {
             © {new Date().getFullYear()} {shop.name}. All rights reserved.
           </span>
           <span className="flex items-center gap-2">
-            Powered by open-shopify
+            Powered by OpenStore
             <Link href={`/admin/${shop.slug}`} className="underline">
               Admin
             </Link>

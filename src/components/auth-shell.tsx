@@ -21,14 +21,14 @@ export function AuthShell({
           </Link>
           <div className="max-w-md">
             <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">
-              Everything you need to run a store, reverse-engineered and open.
+              Everything you need to run a store, open and self-hosted.
             </h2>
             <ul className="mt-8 space-y-4 text-sm text-slate-300">
               {[
                 "Products, variants, inventory and collections",
                 "Orders, fulfillment, refunds and customer history",
-                "Themes, apps, discounts and a public API",
-                "Plans, trials, invoices and usage limits"
+                "Six themes, built-in apps, discounts and a public API",
+                "Payments, email and analytics through your own providers"
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <span className="mt-0.5 rounded-full bg-emerald-500/15 p-1 text-emerald-400">
@@ -40,7 +40,7 @@ export function AuthShell({
             </ul>
           </div>
           <p className="text-xs text-slate-500">
-            open-shopify · a reverse-engineering study of modern commerce platforms
+            OpenStore · independent open-source commerce, built to self-host
           </p>
         </div>
       </div>

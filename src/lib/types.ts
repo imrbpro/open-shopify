@@ -17,7 +17,9 @@ export type CartLine = CartItemInput & {
 
 export type ActionState = FormState;
 
-export type CheckoutState = { error?: string; orderNumber?: number } | undefined;
+export type CheckoutState =
+  | { error?: string; orderNumber?: number; redirectUrl?: string }
+  | undefined;
 
 export type DiscountPreview =
   | { ok: false; error: string }

@@ -82,8 +82,8 @@ export default async function WebhookSettingsPage({
             </button>
           </form>
           <p className="mt-4 rounded-lg bg-slate-50 p-2.5 text-[11px] leading-relaxed text-slate-500">
-            Headers include <code className="kbd">X-Open-Shopify-Topic</code> and{" "}
-            <code className="kbd">X-Open-Shopify-Hmac-Sha256</code>.
+            Headers include <code className="kbd">X-OpenStore-Topic</code> and{" "}
+            <code className="kbd">X-OpenStore-Hmac-Sha256</code>.
           </p>
         </div>
 

@@ -1,0 +1,31 @@
+OpenStore
+Copyright (c) 2026 imrbpro
+
+OpenStore is an independent, original open-source commerce platform. It is not affiliated with,
+endorsed by, sponsored by, or derived from Shopify Inc., and it is not a copy of any proprietary
+commerce platform.
+
+Trademark notice
+----------------
+
+"Shopify" and any other third-party product or company names mentioned in this repository are the
+trademarks or registered trademarks of their respective owners. References to third-party services
+(including Stripe, Resend, Google Analytics, Google Tag Manager and Plausible) are descriptive only:
+they identify integrations that OpenStore can be configured to use. No endorsement or partnership
+is implied.
+
+All OpenStore source code, themes, demo copy, product data, artwork and documentation in this
+repository were created for this project, except for clearly identified third-party dependencies
+that remain under their own licenses.
+
+Demo content
+------------
+
+The seeded store, customer names, addresses, product names and imagery are fictional and are provided
+for testing only. Any resemblance to real people or businesses is coincidental.
+
+Security
+--------
+
+Provider credentials and webhook secrets are stored in the application database at runtime. They are
+not part of this repository. Protect database backups and restrict admin access accordingly.

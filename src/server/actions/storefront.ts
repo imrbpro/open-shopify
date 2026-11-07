@@ -12,7 +12,13 @@ import {
 import { getShopSettings } from "@/lib/settings";
 import { queueEmail } from "@/lib/email";
 import { dispatchWebhooks } from "@/lib/webhooks";
-import { renderTemplate } from "@/lib/utils";
+import { cancelPendingOrder, markOrderPaid } from "@/lib/orders";
+import { absoluteUrl, getBaseUrl } from "@/lib/url";
+import {
+  buildCustomPaymentUrl,
+  createStripeCheckoutSession,
+  paymentCancelToken
+} from "@/lib/payments";
 import type { CheckoutState, DiscountPreview, FormState } from "@/lib/types";
 
 const EVENT_NAMES = new Set([
@@ -143,14 +149,8 @@ export async function placeOrder(
   formData: FormData
 ): Promise<CheckoutState> {
   const shopSlug = text(formData, "shopSlug");
-  const shop = await prisma.shop.findUnique({
-    where: { slug: shopSlug },
-    include: { subscription: true }
-  });
+  const shop = await prisma.shop.findUnique({ where: { slug: shopSlug } });
   if (!shop) return { error: "Store not found." };
-  if (shop.subscription?.status === "CANCELLED") {
-    return { error: "This store is not accepting orders right now." };
-  }
 
   let requested: { variantId: string; quantity: number }[] = [];
   try {
@@ -217,15 +217,21 @@ export async function placeOrder(
   if (!zip) return { error: "Enter a ZIP or postal code." };
 
   const settings = await getShopSettings(shop.id);
-  const paymentEnabled = settings.cardPayment ? "card" : settings.manualPayment ? "manual" : null;
-  if (!paymentEnabled) return { error: "Checkout is not configured to accept payments." };
-  const requestedPayment = text(formData, "paymentMethod");
-  const paymentMethod =
-    requestedPayment === "card" && settings.cardPayment
-      ? "card"
-      : requestedPayment === "manual" && settings.manualPayment
-        ? "manual"
-        : paymentEnabled;
+  const provider = settings.paymentProvider;
+  if (provider === "stripe" && !settings.stripeSecretKey) {
+    return { error: "Card payments are not configured yet. Choose another payment method or contact the store." };
+  }
+  if (provider === "custom" && (!settings.customPaymentUrl || !settings.customPaymentSecret)) {
+    return { error: "The external payment provider is not configured yet. Please contact the store." };
+  }
+  const paymentLabel =
+    provider === "simulated"
+      ? "Card (simulated)"
+      : provider === "manual"
+        ? "Manual payment"
+        : provider === "stripe"
+          ? "Stripe Checkout"
+          : settings.customPaymentName || "External payment";
 
   const code = text(formData, "discountCode").toUpperCase();
   const discount = code
@@ -317,7 +323,6 @@ export async function placeOrder(
     select: { number: true }
   });
   const orderNumber = (lastOrder?.number ?? 1000) + 1;
-  const financialStatus = paymentMethod === "card" ? "PAID" : "PENDING";
   const shippingAddressJson = JSON.stringify({
     name: fullName,
     company: "",
@@ -336,7 +341,7 @@ export async function placeOrder(
       number: orderNumber,
       customerId: customer.id,
       email,
-      financialStatus,
+      financialStatus: "PENDING",
       fulfillmentStatus: "UNFULFILLED",
       currency: shop.currency,
       subtotal: totals.subtotal,
@@ -346,7 +351,7 @@ export async function placeOrder(
       total: totals.total,
       discountCode: discount?.code ?? null,
       shippingMethod: shippingRate?.name ?? "Free shipping",
-      paymentMethod: paymentMethod === "card" ? "Card (simulated)" : "Manual payment",
+      paymentMethod: paymentLabel,
       shippingAddressJson,
       items: {
         create: lines.map((line) => ({
@@ -364,13 +369,7 @@ export async function placeOrder(
       timeline: {
         create: [
           { type: "placed", message: `Order placed by ${fullName}.` },
-          {
-            type: "payment",
-            message:
-              financialStatus === "PAID"
-                ? "Payment captured via simulated card gateway."
-                : "Awaiting manual payment."
-          }
+          { type: "payment", message: `Awaiting payment via ${paymentLabel}.` }
         ]
       }
     }
@@ -394,50 +393,83 @@ export async function placeOrder(
 
   await prisma.customer.update({
     where: { id: customer.id },
-    data: {
-      ordersCount: { increment: 1 },
-      totalSpent: { increment: totals.total }
-    }
-  });
-
-  await prisma.event.create({
-    data: {
-      shopId: shop.id,
-      name: "order_completed",
-      value: totals.total,
-      dataJson: JSON.stringify({ number: orderNumber, email, paymentMethod })
-    }
-  });
-
-  const templateVars: Record<string, string> = {
-    customer_name: fullName || email,
-    order_number: `#${orderNumber}`,
-    total: formatMoney(totals.total, shop.currency),
-    shop_name: shop.name,
-    tracking_number: "",
-    tracking_company: ""
-  };
-  await queueEmail({
-    shopId: shop.id,
-    to: email,
-    subject: renderTemplate(settings.orderConfirmationSubject, templateVars),
-    body: renderTemplate(settings.orderConfirmationBody, templateVars),
-    kind: "order_confirmation"
+    data: { ordersCount: { increment: 1 } }
   });
 
   await dispatchWebhooks(shop.slug, shop.id, "orders/create", {
     order: { number: orderNumber, email, total: totals.total, currency: shop.currency }
   });
-  if (financialStatus === "PAID") {
-    await dispatchWebhooks(shop.slug, shop.id, "orders/paid", {
-      order: { number: orderNumber, email, total: totals.total, currency: shop.currency }
-    });
-  }
   if (isNewCustomer) {
     await dispatchWebhooks(shop.slug, shop.id, "customers/create", {
       customer: { email, name: fullName }
     });
   }
 
-  return { orderNumber };
+  if (provider === "simulated") {
+    const paid = await markOrderPaid(order.id, {
+      paymentRef: "simulated",
+      message: "Payment captured via simulated card gateway."
+    });
+    if (!paid.ok) return { error: paid.error };
+    return { orderNumber };
+  }
+
+  if (provider === "manual") {
+    await queueEmail({
+      shopId: shop.id,
+      to: email,
+      subject: `Payment instructions for order #${orderNumber} — ${shop.name}`,
+      body: `Hi ${fullName || email},\n\nYour order #${orderNumber} is reserved. Payment method: ${paymentLabel}.\n\nAmount due: ${formatMoney(totals.total, shop.currency)}\n\nWe'll confirm your order as soon as payment is received.\n\n— ${shop.name}`,
+      kind: "payment_instructions"
+    }).catch(() => undefined);
+    return { orderNumber };
+  }
+
+  if (provider === "stripe") {
+    const base = getBaseUrl();
+    const cancelToken = paymentCancelToken(order.id);
+    const session = await createStripeCheckoutSession({
+      secretKey: settings.stripeSecretKey,
+      orderId: order.id,
+      orderNumber,
+      shopName: shop.name,
+      currency: shop.currency,
+      totalCents: totals.total,
+      customerEmail: email,
+      successUrl: `${base}/api/payments/stripe/return?session_id={CHECKOUT_SESSION_ID}&shop=${encodeURIComponent(shop.slug)}`,
+      cancelUrl: `${base}/api/payments/stripe/cancel?order=${encodeURIComponent(order.id)}&token=${encodeURIComponent(cancelToken)}`
+    });
+    if (!session.ok) {
+      await cancelPendingOrder(order.id, "Stripe Checkout could not be started.");
+      return { error: `Could not start card payment: ${session.error}` };
+    }
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentRef: session.id }
+    });
+    return { orderNumber, redirectUrl: session.url };
+  }
+
+  const returnUrl = absoluteUrl(
+    `/api/payments/custom/return?order=${encodeURIComponent(order.id)}&token=${encodeURIComponent(paymentCancelToken(order.id))}`
+  );
+  const cancelUrl = absoluteUrl(
+    `/api/payments/custom/cancel?order=${encodeURIComponent(order.id)}&token=${encodeURIComponent(paymentCancelToken(order.id))}`
+  );
+  const paymentUrl = buildCustomPaymentUrl({
+    baseUrl: settings.customPaymentUrl,
+    secret: settings.customPaymentSecret,
+    orderId: order.id,
+    orderNumber,
+    amount: totals.total,
+    currency: shop.currency,
+    email,
+    returnUrl,
+    cancelUrl
+  });
+  if (!paymentUrl) {
+    await cancelPendingOrder(order.id, "The external payment provider is not configured correctly.");
+    return { error: "The external payment provider is not configured correctly." };
+  }
+  return { orderNumber, redirectUrl: paymentUrl };
 }

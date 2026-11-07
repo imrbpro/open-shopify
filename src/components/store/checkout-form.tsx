@@ -30,11 +30,11 @@ const COUNTRIES = [
   ["TR", "Türkiye"]
 ];
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="store-btn w-full disabled:opacity-50">
-      {pending ? "Placing order…" : "Place order"}
+      {pending ? "Working…" : label}
     </button>
   );
 }
@@ -45,8 +45,8 @@ export function CheckoutForm({
   rates,
   taxRatePct,
   taxShipping,
-  cardEnabled,
-  manualEnabled,
+  paymentProvider,
+  paymentName,
   checkoutNote
 }: {
   slug: string;
@@ -54,8 +54,8 @@ export function CheckoutForm({
   rates: ShippingRate[];
   taxRatePct: number;
   taxShipping: boolean;
-  cardEnabled: boolean;
-  manualEnabled: boolean;
+  paymentProvider: string;
+  paymentName: string;
   checkoutNote: string;
 }) {
   const router = useRouter();
@@ -68,6 +68,11 @@ export function CheckoutForm({
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
+    if (state?.redirectUrl) {
+      clear();
+      window.location.assign(state.redirectUrl);
+      return;
+    }
     if (state?.orderNumber) {
       clear();
       router.push(`/s/${slug}/thank-you/${state.orderNumber}`);
@@ -133,9 +138,12 @@ export function CheckoutForm({
 
   return (
     <div>
-      <TrackStoreEvent shopSlug={slug} name="checkout_started" value={Math.round(subtotal)} />
+      {ready ? (
+        <TrackStoreEvent shopSlug={slug} name="checkout_started" value={Math.round(subtotal)} />
+      ) : null}
       <form action={formAction} className="grid gap-8 lg:grid-cols-5">
         <input type="hidden" name="shopSlug" value={slug} />
+        <input type="hidden" name="paymentMethod" value={paymentProvider} />
         <input
           type="hidden"
           name="items"
@@ -265,41 +273,24 @@ export function CheckoutForm({
 
           <div className="store-card p-5">
             <h2 className="store-heading text-lg font-semibold">Payment</h2>
-            <div className="mt-3 space-y-2">
-              {cardEnabled ? (
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 store-border">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="card"
-                    defaultChecked
-                    className="mt-0.5 h-4 w-4"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium">Credit card (test mode)</span>
-                    <span className="block text-xs store-muted">
-                      No real charge. Simulated approval using card •••• 4242.
-                    </span>
-                  </span>
-                </label>
-              ) : null}
-              {manualEnabled ? (
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 store-border">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="manual"
-                    defaultChecked={!cardEnabled}
-                    className="mt-0.5 h-4 w-4"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium">Manual payment</span>
-                    <span className="block text-xs store-muted">
-                      Bank transfer or cash on delivery. We&apos;ll email payment instructions.
-                    </span>
-                  </span>
-                </label>
-              ) : null}
+            <div className="mt-3 rounded-lg border p-3 store-border">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <span className="h-2 w-2 rounded-full" style={{ background: "var(--os-primary)" }} />
+                {paymentProvider === "simulated"
+                  ? "Credit card (test mode)"
+                  : paymentProvider === "manual"
+                    ? "Manual payment"
+                    : paymentName}
+              </p>
+              <p className="mt-1 text-xs store-muted">
+                {paymentProvider === "simulated"
+                  ? "No real charge. This demo store approves the order automatically using a simulated card."
+                  : paymentProvider === "manual"
+                    ? "Bank transfer or cash on delivery. We'll email instructions and mark the order paid once funds clear."
+                    : paymentProvider === "stripe"
+                      ? "You'll be redirected to Stripe's secure checkout. You'll return to this store when payment is complete."
+                      : `You'll be redirected to ${paymentName} to complete payment. We'll confirm the order once payment is received.`}
+              </p>
             </div>
           </div>
         </div>
@@ -400,7 +391,13 @@ export function CheckoutForm({
             </div>
 
             <div className="mt-4">
-              <SubmitButton />
+              <SubmitButton
+                label={
+                  paymentProvider === "stripe" || paymentProvider === "custom"
+                    ? "Continue to payment"
+                    : "Place order"
+                }
+              />
             </div>
             {state?.error ? (
               <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{state.error}</p>

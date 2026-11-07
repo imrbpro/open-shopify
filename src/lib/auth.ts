@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { cache } from "react";
 import { SignJWT, jwtVerify } from "jose";
-import type { Plan, Shop, Subscription, User, Membership } from "@prisma/client";
+import type { Shop, User, Membership } from "@prisma/client";
 import { prisma } from "./db";
 
 const COOKIE_NAME = "os_session";
@@ -10,7 +10,7 @@ const SESSION_DAYS = 30;
 
 function secretKey(): Uint8Array {
   return new TextEncoder().encode(
-    process.env.AUTH_SECRET ?? "open-shopify-dev-secret-change-me"
+    process.env.AUTH_SECRET ?? "openstore-dev-secret-change-me"
   );
 }
 
@@ -55,7 +55,7 @@ export async function requireUser(): Promise<User> {
 export type ShopContext = {
   user: User;
   membership: Membership;
-  shop: Shop & { subscription: (Subscription & { plan: Plan }) | null };
+  shop: Shop;
 };
 
 export async function requireShop(
@@ -63,10 +63,7 @@ export async function requireShop(
   opts: { owner?: boolean } = {}
 ): Promise<ShopContext> {
   const user = await requireUser();
-  const shop = await prisma.shop.findUnique({
-    where: { slug },
-    include: { subscription: { include: { plan: true } } }
-  });
+  const shop = await prisma.shop.findUnique({ where: { slug } });
   if (!shop) notFound();
 
   const membership = await prisma.membership.findUnique({

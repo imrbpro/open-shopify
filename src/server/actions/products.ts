@@ -3,7 +3,6 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireShop } from "@/lib/auth";
-import { isWithinPlanLimit } from "@/lib/plans";
 import { parseMoneyToCents } from "@/lib/money";
 import { slugify, tagsToCsv } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhooks";
@@ -79,16 +78,6 @@ async function uniqueHandle(shopId: string, base: string, excludeId?: string): P
   }
 }
 
-async function assertProductLimit(shopId: string, plan: { productLimit: number | null } | undefined) {
-  if (!plan) return;
-  const count = await prisma.product.count({ where: { shopId } });
-  if (!isWithinPlanLimit(plan, "products", count)) {
-    throw new Error(
-      "Your plan's product limit has been reached. Upgrade your plan in Plan & billing to add more."
-    );
-  }
-}
-
 export async function createProduct(formData: FormData): Promise<void> {
   const shopSlug = text(formData, "shopSlug");
   const { shop } = await requireShop(shopSlug);
@@ -99,7 +88,6 @@ export async function createProduct(formData: FormData): Promise<void> {
   try {
     title = text(formData, "title");
     if (!title) throw new Error("Product title is required.");
-    await assertProductLimit(shop.id, shop.subscription?.plan);
     variants = parseVariants(formData.get("variants"));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create the product.";

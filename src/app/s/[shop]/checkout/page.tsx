@@ -35,8 +35,8 @@ export default async function CheckoutPage({ params }: { params: { shop: string 
         }))}
         taxRatePct={store.settings.taxRatePct}
         taxShipping={store.settings.taxShipping}
-        cardEnabled={store.settings.cardPayment}
-        manualEnabled={store.settings.manualPayment}
+        paymentProvider={store.settings.paymentProvider}
+        paymentName={store.settings.customPaymentName || "External payment"}
         checkoutNote={store.settings.checkoutNote}
       />
     </div>

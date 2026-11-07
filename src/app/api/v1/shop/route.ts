@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { authenticateApiRequest, unauthorized } from "@/lib/api-auth";
+import { getShopSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -8,10 +9,14 @@ export async function GET(request: Request): Promise<Response> {
   if (!context) return unauthorized();
 
   const { shop, key } = context;
-  const subscription = await prisma.subscription.findUnique({
-    where: { shopId: shop.id },
-    include: { plan: true }
-  });
+  const [settings, themes, installations] = await Promise.all([
+    getShopSettings(shop.id),
+    prisma.theme.findMany({ where: { shopId: shop.id }, select: { name: true, role: true, preset: true } }),
+    prisma.appInstallation.findMany({
+      where: { shopId: shop.id, status: "ACTIVE" },
+      include: { app: { select: { handle: true, name: true } } }
+    })
+  ]);
 
   return Response.json({
     shop: {
@@ -23,8 +28,15 @@ export async function GET(request: Request): Promise<Response> {
       currency: shop.currency,
       country: shop.country,
       timezone: shop.timezone,
-      plan: subscription?.plan.name ?? null
+      paymentProvider: settings.paymentProvider,
+      emailProvider: settings.emailProvider,
+      analyticsProvider: settings.analyticsProvider
     },
+    theme: themes.find((theme) => theme.role === "MAIN") ?? themes[0] ?? null,
+    apps: installations.map((installation) => ({
+      handle: installation.app.handle,
+      name: installation.app.name
+    })),
     key: { label: key.label, scopes: key.scopes.split(",").map((scope) => scope.trim()) }
   });
 }

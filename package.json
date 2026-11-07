@@ -1,8 +1,8 @@
 {
-  "name": "open-shopify",
+  "name": "openstore",
   "version": "1.0.0",
   "private": true,
-  "description": "Open-source Shopify clone: multi-tenant commerce platform with admin, storefront, checkout, plans and billing.",
+  "description": "OpenStore: an independent open-source commerce platform with admin, storefront, six themes, built-in apps and provider-agnostic payments, email and analytics.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

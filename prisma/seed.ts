@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { PLAN_SEEDS } from "../src/lib/plans";
+import { BUILTIN_APPS } from "../src/lib/apps";
 import { THEME_PRESETS, serializeThemeConfig } from "../src/lib/theme";
 import { DEFAULT_SETTINGS, serializeSetting } from "../src/lib/settings-defaults";
 import { computeDiscountAmount, computeTotals, isFreeShippingDiscount } from "../src/lib/discounts";
@@ -235,36 +235,13 @@ async function clear() {
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
-  await prisma.invoice.deleteMany();
-  await prisma.subscription.deleteMany();
   await prisma.membership.deleteMany();
   await prisma.shop.deleteMany();
   await prisma.user.deleteMany();
-  await prisma.plan.deleteMany();
 }
 
 async function main() {
   await clear();
-
-  for (const plan of PLAN_SEEDS) {
-    await prisma.plan.create({
-      data: {
-        id: plan.id,
-        code: plan.code,
-        name: plan.name,
-        description: plan.description,
-        priceMonthly: plan.priceMonthly,
-        trialDays: plan.trialDays,
-        productLimit: plan.productLimit,
-        staffLimit: plan.staffLimit,
-        transactionFeeBps: plan.transactionFeeBps,
-        cardRateBps: plan.cardRateBps,
-        cardFixedCents: plan.cardFixedCents,
-        features: plan.features.join("\n"),
-        sortOrder: plan.sortOrder
-      }
-    });
-  }
 
   const passwordHash = await bcrypt.hash("demo1234", 10);
   const owner = await prisma.user.create({
@@ -294,39 +271,6 @@ async function main() {
     ]
   });
 
-  const subscription = await prisma.subscription.create({
-    data: {
-      shopId: shop.id,
-      planId: "shopify",
-      status: "ACTIVE",
-      currentPeriodStart: addDays(now, -5),
-      currentPeriodEnd: addDays(now, 25)
-    }
-  });
-
-  await prisma.invoice.createMany({
-    data: [
-      {
-        subscriptionId: subscription.id,
-        number: "INV-1001",
-        amount: 10500,
-        status: "PAID",
-        periodStart: addDays(now, -35),
-        periodEnd: addDays(now, -5),
-        createdAt: addDays(now, -35)
-      },
-      {
-        subscriptionId: subscription.id,
-        number: "INV-1002",
-        amount: 10500,
-        status: "PAID",
-        periodStart: addDays(now, -5),
-        periodEnd: addDays(now, 25),
-        createdAt: addDays(now, -5)
-      }
-    ]
-  });
-
   await prisma.shopSetting.createMany({
     data: Object.entries({ ...DEFAULT_SETTINGS, taxRatePct: 8.25 }).map(([key, value]) => ({
       shopId: shop.id,
@@ -335,12 +279,12 @@ async function main() {
     }))
   });
 
-  const themes = [
-    { name: "Dawn", role: "MAIN", preset: "dawn" },
-    { name: "Spotlight", role: "UNPUBLISHED", preset: "spotlight" },
-    { name: "Organic", role: "UNPUBLISHED", preset: "organic" }
-  ];
-  for (const theme of themes) {
+  const themeSeeds = Object.entries(THEME_PRESETS).map(([preset, theme], index) => ({
+    preset,
+    name: theme.name,
+    role: index === 0 ? "MAIN" : "UNPUBLISHED"
+  }));
+  for (const theme of themeSeeds) {
     await prisma.theme.create({
       data: {
         shopId: shop.id,
@@ -578,7 +522,8 @@ async function main() {
         total: totals.total,
         discountCode: plan.discount ?? null,
         shippingMethod: freeShipping ? "Free standard shipping" : "Standard shipping",
-        paymentMethod: plan.status === "PENDING" ? null : "Card (mock)",
+        paymentMethod:
+          plan.status === "PENDING" || plan.status === "CANCELLED" ? null : "Simulated card",
         note: plan.number === 1005 ? "Please leave at the side gate." : null,
         shippingAddressJson: JSON.stringify(address),
         createdAt,
@@ -602,16 +547,22 @@ async function main() {
       }
     });
 
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        ordersCount: { increment: plan.status === "CANCELLED" ? 0 : 1 },
+        totalSpent: {
+          increment:
+            plan.status === "PAID" || plan.status === "PARTIALLY_REFUNDED" || plan.status === "REFUNDED"
+              ? totals.total
+              : 0
+        }
+      }
+    });
+
     if (plan.status !== "PENDING" && plan.status !== "CANCELLED") {
       await prisma.orderEvent.create({
         data: { orderId: order.id, type: "payment_captured", message: `Payment of $${(totals.total / 100).toFixed(2)} captured.`, createdAt }
-      });
-      await prisma.customer.update({
-        where: { id: customer.id },
-        data: {
-          ordersCount: { increment: 1 },
-          totalSpent: { increment: totals.total }
-        }
       });
     }
 
@@ -668,6 +619,8 @@ async function main() {
           subject: `Order #${plan.number} confirmed — ${shop.name}`,
           body: `Hi ${customerSeed.firstName},\n\nThanks for your order! We're getting #${plan.number} ready now.\n\nWe'll email you again when it ships.\n\n— ${shop.name}`,
           kind: "order_confirmation",
+          status: "OUTBOX",
+          provider: "outbox",
           createdAt
         }
       });
@@ -734,103 +687,14 @@ async function main() {
     ]
   });
 
-  const apps = [
-    {
-      id: "app-judgeme",
-      name: "Judge.me Product Reviews",
-      handle: "judgeme-reviews",
-      tagline: "Collect and display product reviews.",
-      description:
-        "Add photo reviews, star ratings, and review widgets to your product pages. Auto-publish trusted reviews and reply to customers.",
-      category: "Marketing",
-      developer: "Judge.me",
-      color: "#2563eb",
-      priceLabel: "Free plan available",
-      rating: 49,
-      installs: 45000,
-      capabilities: "reviews"
-    },
-    {
-      id: "app-klaviyo",
-      name: "Klaviyo: Email Marketing",
-      handle: "klaviyo-email",
-      tagline: "Email and SMS marketing built for commerce.",
-      description:
-        "Sync your storefront newsletter signups, build segments, and send abandoned cart flows from Klaviyo.",
-      category: "Marketing",
-      developer: "Klaviyo",
-      color: "#0f172a",
-      priceLabel: "Free up to 250 contacts",
-      rating: 48,
-      installs: 32000,
-      capabilities: "newsletter"
-    },
-    {
-      id: "app-printful",
-      name: "Printful: Print on Demand",
-      handle: "printful",
-      tagline: "Print and ship custom products worldwide.",
-      description:
-        "Connect products to Printful's fulfillment network for automated print-on-demand and white-label shipping.",
-      category: "Order fulfillment",
-      developer: "Printful",
-      color: "#7c3aed",
-      priceLabel: "Free to install",
-      rating: 46,
-      installs: 28000,
-      capabilities: "dropshipping"
-    },
-    {
-      id: "app-tidio",
-      name: "Tidio: Live Chat & AI",
-      handle: "tidio-chat",
-      tagline: "Answer customer questions in real time.",
-      description:
-        "Add a live chat and AI chatbot to your storefront. Escalate to a human when the bot can't help.",
-      category: "Customer support",
-      developer: "Tidio",
-      color: "#0891b2",
-      priceLabel: "Free plan available",
-      rating: 47,
-      installs: 19000,
-      capabilities: "chat"
-    },
-    {
-      id: "app-fera",
-      name: "Fera Product Reviews",
-      handle: "fera-reviews",
-      tagline: "Highly customizable review widgets.",
-      description: "Review collection, photo galleries, and rich snippets for product pages.",
-      category: "Marketing",
-      developer: "Fera",
-      color: "#db2777",
-      priceLabel: "From $9/month",
-      rating: 48,
-      installs: 9000,
-      capabilities: "reviews"
-    },
-    {
-      id: "app-stocksync",
-      name: "Stock Sync: Inventory Sync",
-      handle: "stock-sync",
-      tagline: "Sync inventory across suppliers and channels.",
-      description: "Automatic inventory updates from spreadsheets, FTP, or supplier feeds.",
-      category: "Inventory",
-      developer: "Stock Sync",
-      color: "#ea580c",
-      priceLabel: "From $5/month",
-      rating: 45,
-      installs: 7000,
-      capabilities: "inventory"
-    }
-  ];
-  for (const app of apps) await prisma.app.create({ data: app });
+  for (const app of BUILTIN_APPS) await prisma.app.create({ data: app });
 
   await prisma.appInstallation.createMany({
-    data: [
-      { shopId: shop.id, appId: "app-judgeme", installedAt: addDays(now, -20) },
-      { shopId: shop.id, appId: "app-klaviyo", installedAt: addDays(now, -14) }
-    ]
+    data: BUILTIN_APPS.map((app, index) => ({
+      shopId: shop.id,
+      appId: app.id,
+      installedAt: addDays(now, -20 + index)
+    }))
   });
 
   await prisma.apiKey.create({

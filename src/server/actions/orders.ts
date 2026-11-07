@@ -8,6 +8,7 @@ import { formatMoney, parseMoneyToCents } from "@/lib/money";
 import { renderTemplate } from "@/lib/utils";
 import { queueEmail } from "@/lib/email";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { cancelPendingOrder, markOrderPaid as markPaid } from "@/lib/orders";
 
 function text(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -28,34 +29,11 @@ export async function markOrderPaid(formData: FormData): Promise<void> {
   const { shop } = await requireShop(shopSlug);
   const order = await loadOrder(shop.id, text(formData, "id"));
   const redirectBase = `/admin/${shop.slug}/orders/${order.id}`;
-  if (["PAID", "PARTIALLY_REFUNDED", "REFUNDED"].includes(order.financialStatus)) {
-    redirect(redirectBase);
+
+  const result = await markPaid(order.id, { message: "Payment marked as paid (manual capture)." });
+  if (!result.ok) {
+    redirect(`${redirectBase}?error=${encodeURIComponent(result.error)}`);
   }
-
-  await prisma.order.update({
-    where: { id: order.id },
-    data: {
-      financialStatus: "PAID",
-      timeline: {
-        create: { type: "payment_captured", message: "Payment marked as paid (manual capture)." }
-      }
-    }
-  });
-
-  if (order.customerId) {
-    await prisma.customer.update({
-      where: { id: order.customerId },
-      data: { ordersCount: { increment: 1 }, totalSpent: { increment: order.total } }
-    });
-  }
-
-  await dispatchWebhooks(shop.slug, shop.id, "orders/paid", {
-    id: order.id,
-    number: order.number,
-    email: order.email,
-    total: order.total,
-    currency: order.currency
-  });
 
   redirect(redirectBase);
 }
@@ -178,33 +156,16 @@ export async function cancelOrder(formData: FormData): Promise<void> {
       `${redirectBase}?error=${encodeURIComponent("Fulfilled orders cannot be cancelled. Refund instead.")}`
     );
   }
+  if (!["PENDING", "AUTHORIZED"].includes(order.financialStatus)) {
+    redirect(
+      `${redirectBase}?error=${encodeURIComponent("Only unpaid orders can be cancelled. Refund a paid order instead.")}`
+    );
+  }
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of order.items) {
-      if (!item.variantId) continue;
-      const variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
-      if (!variant || !variant.trackInventory) continue;
-      await tx.productVariant.update({
-        where: { id: variant.id },
-        data: { inventoryQty: { increment: item.quantity } }
-      });
-    }
-    await tx.order.update({
-      where: { id: order.id },
-      data: {
-        financialStatus: "CANCELLED",
-        timeline: {
-          create: { type: "cancelled", message: "Order cancelled and inventory restocked." }
-        }
-      }
-    });
-  });
-
-  await dispatchWebhooks(shop.slug, shop.id, "orders/cancelled", {
-    id: order.id,
-    number: order.number,
-    email: order.email
-  });
+  const result = await cancelPendingOrder(order.id, "Order cancelled by merchant; inventory restocked.");
+  if (!result.ok) {
+    redirect(`${redirectBase}?error=${encodeURIComponent(result.error)}`);
+  }
 
   redirect(redirectBase);
 }

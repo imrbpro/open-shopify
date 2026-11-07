@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getStore } from "@/lib/storefront";
+import { getStore, isAppInstalled } from "@/lib/storefront";
 import { minVariantPrice } from "@/lib/catalog";
 import { ProductCard } from "@/components/store/product-card";
 import { TrackStoreEvent } from "@/components/store/track-event";
@@ -88,6 +88,7 @@ export default async function SearchPage({
                       .sort((a, b) => a - b)[0] ?? null;
                   return (
                     <ProductCard
+                      showWishlist={isAppInstalled(store, "wishlist")}
                       key={product.id}
                       slug={shop.slug}
                       product={{

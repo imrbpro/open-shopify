@@ -5,9 +5,14 @@ import bcrypt from "bcryptjs";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireShop } from "@/lib/auth";
-import { isWithinPlanLimit } from "@/lib/plans";
-import { setShopSettings } from "@/lib/settings";
+import { getShopSettings, setShopSettings } from "@/lib/settings";
 import { parseMoneyToCents } from "@/lib/money";
+import { queueEmail } from "@/lib/email";
+import {
+  ANALYTICS_PROVIDERS,
+  EMAIL_PROVIDERS,
+  PAYMENT_PROVIDERS
+} from "@/lib/settings-defaults";
 import { generateWebhookSecret, signPayload, WEBHOOK_TOPICS } from "@/lib/webhooks";
 
 function text(formData: FormData, key: string): string {
@@ -61,8 +66,6 @@ export async function updateCheckoutSettings(formData: FormData): Promise<void> 
   }
 
   await setShopSettings(shop.id, {
-    manualPayment: bool(formData, "manualPayment"),
-    cardPayment: bool(formData, "cardPayment"),
     taxRatePct: taxRate,
     taxShipping: bool(formData, "taxShipping"),
     checkoutNote: text(formData, "checkoutNote"),
@@ -71,6 +74,92 @@ export async function updateCheckoutSettings(formData: FormData): Promise<void> 
   });
 
   redirect(`${base}?saved=1`);
+}
+
+function validHttpUrl(value: string): boolean {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export async function updateIntegrationSettings(formData: FormData): Promise<void> {
+  const shopSlug = text(formData, "shopSlug");
+  const { shop } = await requireShop(shopSlug, { owner: true });
+  const base = `/admin/${shop.slug}/settings/integrations`;
+
+  const paymentProvider = text(formData, "paymentProvider");
+  const emailProvider = text(formData, "emailProvider");
+  const analyticsProvider = text(formData, "analyticsProvider");
+  if (!PAYMENT_PROVIDERS.includes(paymentProvider as (typeof PAYMENT_PROVIDERS)[number])) {
+    redirect(`${base}?error=${encodeURIComponent("Choose a valid payment provider.")}`);
+  }
+  if (!EMAIL_PROVIDERS.includes(emailProvider as (typeof EMAIL_PROVIDERS)[number])) {
+    redirect(`${base}?error=${encodeURIComponent("Choose a valid email provider.")}`);
+  }
+  if (!ANALYTICS_PROVIDERS.includes(analyticsProvider as (typeof ANALYTICS_PROVIDERS)[number])) {
+    redirect(`${base}?error=${encodeURIComponent("Choose a valid analytics provider.")}`);
+  }
+
+  const customPaymentUrl = text(formData, "customPaymentUrl");
+  const emailWebhookUrl = text(formData, "emailWebhookUrl");
+  const customAnalyticsScriptUrl = text(formData, "customAnalyticsScriptUrl");
+  if (!validHttpUrl(customPaymentUrl)) {
+    redirect(`${base}?error=${encodeURIComponent("The custom payment URL must start with http:// or https://.")}`);
+  }
+  if (!validHttpUrl(emailWebhookUrl)) {
+    redirect(`${base}?error=${encodeURIComponent("The email webhook URL must start with http:// or https://.")}`);
+  }
+  if (!validHttpUrl(customAnalyticsScriptUrl)) {
+    redirect(`${base}?error=${encodeURIComponent("The analytics script URL must start with http:// or https://.")}`);
+  }
+
+  await setShopSettings(shop.id, {
+    paymentProvider,
+    stripePublishableKey: text(formData, "stripePublishableKey"),
+    stripeSecretKey: text(formData, "stripeSecretKey"),
+    stripeWebhookSecret: text(formData, "stripeWebhookSecret"),
+    customPaymentName: text(formData, "customPaymentName"),
+    customPaymentUrl,
+    customPaymentSecret: text(formData, "customPaymentSecret"),
+    emailProvider,
+    emailFrom: text(formData, "emailFrom"),
+    emailReplyTo: text(formData, "emailReplyTo"),
+    resendApiKey: text(formData, "resendApiKey"),
+    emailWebhookUrl,
+    emailWebhookSecret: text(formData, "emailWebhookSecret"),
+    analyticsProvider,
+    gaMeasurementId: text(formData, "gaMeasurementId"),
+    gtmContainerId: text(formData, "gtmContainerId"),
+    plausibleDomain: text(formData, "plausibleDomain"),
+    customAnalyticsScriptUrl
+  });
+
+  redirect(`${base}?saved=1`);
+}
+
+export async function sendTestEmail(formData: FormData): Promise<void> {
+  const shopSlug = text(formData, "shopSlug");
+  const { shop } = await requireShop(shopSlug, { owner: true });
+  const base = `/admin/${shop.slug}/settings/integrations`;
+  const settings = await getShopSettings(shop.id);
+  const to = text(formData, "to") || shop.email;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    redirect(`${base}?error=${encodeURIComponent("Enter a valid test recipient email.")}`);
+  }
+
+  const message = await queueEmail({
+    shopId: shop.id,
+    to,
+    subject: `OpenStore test email — ${shop.name}`,
+    body: `This is a test email from ${shop.name}.\n\nProvider: ${settings.emailProvider}\nSent at: ${new Date().toISOString()}\n\nIf you can read this, your email integration is working.`,
+    kind: "test"
+  });
+
+  redirect(`${base}?test=${encodeURIComponent(message.status)}#email`);
 }
 
 export async function createShippingRate(formData: FormData): Promise<void> {
@@ -159,13 +248,6 @@ export async function inviteStaff(formData: FormData): Promise<void> {
   }
   if (password.length < 8) {
     redirect(`${base}?error=${encodeURIComponent("Temp password must be at least 8 characters.")}`);
-  }
-
-  const staffCount = await prisma.membership.count({ where: { shopId: shop.id } });
-  if (shop.subscription?.plan && !isWithinPlanLimit(shop.subscription.plan, "staff", staffCount)) {
-    redirect(
-      `${base}?error=${encodeURIComponent("Your plan's staff seat limit has been reached. Upgrade to invite more staff.")}`
-    );
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -311,8 +393,8 @@ export async function testWebhook(formData: FormData): Promise<void> {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-open-shopify-topic": webhook.topic,
-        "x-open-shopify-hmac-sha256": signPayload(payload, webhook.secret)
+        "x-openstore-topic": webhook.topic,
+        "x-openstore-hmac-sha256": signPayload(payload, webhook.secret)
       },
       body: payload,
       signal: AbortSignal.timeout(5000)

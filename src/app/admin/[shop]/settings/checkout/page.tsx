@@ -28,7 +28,7 @@ export default async function CheckoutSettingsPage({
 
   return (
     <div>
-      <PageHeader title="Checkout" subtitle="Payment methods, taxes, shipping and checkout behavior." />
+      <PageHeader title="Checkout" subtitle="Taxes, shipping and checkout behavior." />
       <SettingsTabs slug={shop.slug} active="checkout" />
 
       <div className="space-y-4">
@@ -38,43 +38,6 @@ export default async function CheckoutSettingsPage({
 
       <form action={updateCheckoutSettings} className="mt-4 space-y-4">
         <input type="hidden" name="shopSlug" value={shop.slug} />
-
-        <div className="card card-pad space-y-4">
-          <div>
-            <h2 className="section-title">Payment methods</h2>
-            <p className="text-xs text-slate-500">
-              Online card payments are simulated. Manual payments record orders without charging.
-            </p>
-          </div>
-          <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3">
-            <input
-              type="checkbox"
-              name="cardPayment"
-              defaultChecked={settings.cardPayment}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600"
-            />
-            <span>
-              <span className="block text-sm font-medium text-slate-900">Credit card (simulated)</span>
-              <span className="block text-xs text-slate-500">
-                Accept Visa, Mastercard and Amex through the built-in test gateway.
-              </span>
-            </span>
-          </label>
-          <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3">
-            <input
-              type="checkbox"
-              name="manualPayment"
-              defaultChecked={settings.manualPayment}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600"
-            />
-            <span>
-              <span className="block text-sm font-medium text-slate-900">Manual payment</span>
-              <span className="block text-xs text-slate-500">
-                Bank transfer, cash on delivery or other offline methods.
-              </span>
-            </span>
-          </label>
-        </div>
 
         <div className="card card-pad space-y-4">
           <div>
@@ -112,7 +75,13 @@ export default async function CheckoutSettingsPage({
         <div className="card card-pad space-y-4">
           <div>
             <h2 className="section-title">Checkout experience</h2>
-            <p className="text-xs text-slate-500">Notes, inventory alerts and marketing opt-in.</p>
+            <p className="text-xs text-slate-500">
+              Notes, inventory alerts and marketing opt-in. Payment and email providers live in{" "}
+              <a href={`/admin/${shop.slug}/settings/integrations`} className="font-medium text-emerald-700 underline">
+                Integrations
+              </a>
+              .
+            </p>
           </div>
           <div>
             <label className="label" htmlFor="checkoutNote">

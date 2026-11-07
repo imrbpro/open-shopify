@@ -8,6 +8,11 @@ import { ProductPurchase } from "@/components/store/product-purchase";
 import { ProductCard } from "@/components/store/product-card";
 import { ReviewForm } from "@/components/store/review-form";
 import { TrackStoreEvent } from "@/components/store/track-event";
+import {
+  RecentlyViewedRail,
+  RecordRecentlyViewed,
+  WishlistButton
+} from "@/components/store/wishlist";
 import { Stars } from "@/components/ui";
 import { Icon } from "@/components/icons";
 
@@ -43,7 +48,9 @@ export default async function ProductPage({
     orderBy: { createdAt: "desc" }
   });
 
-  const reviewApp = isAppInstalled(store, "judgeme-reviews") || isAppInstalled(store, "fera-reviews");
+  const reviewApp = isAppInstalled(store, "product-reviews");
+  const wishlistApp = isAppInstalled(store, "wishlist");
+  const recentlyViewedApp = isAppInstalled(store, "recently-viewed");
   const reviews = reviewApp ? product.reviews : [];
   const averageRating =
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
@@ -64,6 +71,17 @@ export default async function ProductPage({
         data={{ handle: product.handle, title: product.title, productId: product.id }}
         value={minPrice}
       />
+      {recentlyViewedApp ? (
+        <RecordRecentlyViewed
+          product={{
+            handle: product.handle,
+            title: product.title,
+            vendor: product.vendor,
+            image: product.image,
+            minPrice
+          }}
+        />
+      ) : null}
 
       <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs store-muted">
         <Link href={`/s/${shop.slug}`} className="hover:underline">
@@ -154,6 +172,21 @@ export default async function ProductPage({
                 sku: variant.sku
               }))}
             />
+            {wishlistApp ? (
+              <div className="mt-3">
+                <WishlistButton
+                  product={{
+                    handle: product.handle,
+                    title: product.title,
+                    vendor: product.vendor,
+                    image: product.image,
+                    minPrice
+                  }}
+                  withLabel
+                  className="w-full sm:w-auto"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-6 space-y-2 border-t pt-5 text-xs store-muted store-divider">
@@ -205,6 +238,8 @@ export default async function ProductPage({
         </section>
       ) : null}
 
+      {recentlyViewedApp ? <RecentlyViewedRail slug={shop.slug} /> : null}
+
       {related.length > 0 ? (
         <section className="mt-16">
           <h2 className="store-heading mb-5 text-2xl font-semibold">You may also like</h2>
@@ -215,6 +250,7 @@ export default async function ProductPage({
                 <ProductCard
                   key={item.id}
                   slug={shop.slug}
+                  showWishlist={wishlistApp}
                   product={{
                     handle: item.handle,
                     title: item.title,

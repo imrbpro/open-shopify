@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatMoney } from "@/lib/money";
+import { WishlistButton } from "./wishlist";
 
 export type ProductCardData = {
   handle: string;
@@ -11,9 +12,23 @@ export type ProductCardData = {
   soldOut?: boolean;
 };
 
-export function ProductCard({ slug, product }: { slug: string; product: ProductCardData }) {
+export function ProductCard({
+  slug,
+  product,
+  showWishlist = false
+}: {
+  slug: string;
+  product: ProductCardData;
+  showWishlist?: boolean;
+}) {
   return (
-    <Link href={`/s/${slug}/products/${product.handle}`} className="group block">
+    <div className="group relative">
+      {showWishlist ? (
+        <div className="absolute right-3 top-3 z-10">
+          <WishlistButton product={product} />
+        </div>
+      ) : null}
+      <Link href={`/s/${slug}/products/${product.handle}`} className="block">
       <div
         className="relative aspect-[4/5] overflow-hidden rounded-xl border store-border"
         style={{ background: "var(--os-surface)" }}
@@ -37,7 +52,7 @@ export function ProductCard({ slug, product }: { slug: string; product: ProductC
           </span>
         ) : null}
         {product.soldOut ? (
-          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+          <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
             Sold out
           </span>
         ) : null}
@@ -60,6 +75,7 @@ export function ProductCard({ slug, product }: { slug: string; product: ProductC
           ) : null}
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   );
 }

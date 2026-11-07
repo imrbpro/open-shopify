@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "open-shopify — open-source commerce platform",
-    template: "%s · open-shopify"
+    default: "OpenStore — open-source commerce platform",
+    template: "%s · OpenStore"
   },
   description:
-    "A reverse-engineered, open-source commerce platform: multi-tenant stores, admin, checkout, themes, apps, plans and billing."
+    "An independent open-source commerce platform: multi-tenant stores, admin, checkout, six themes, built-in apps and provider-agnostic payments, email and analytics."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

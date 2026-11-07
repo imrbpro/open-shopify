@@ -8,7 +8,6 @@ export const getStore = cache(async (slug: string) => {
   const shop = await prisma.shop.findUnique({
     where: { slug },
     include: {
-      subscription: { include: { plan: true } },
       themes: true,
       settings: true,
       appInstallations: { include: { app: true }, where: { status: "ACTIVE" } }
@@ -25,10 +24,6 @@ export const getStore = cache(async (slug: string) => {
 });
 
 export type StoreContext = Awaited<ReturnType<typeof getStore>>;
-
-export function isStoreOffline(store: StoreContext): boolean {
-  return store.shop.subscription?.status === "CANCELLED";
-}
 
 export function isAppInstalled(store: StoreContext, handle: string): boolean {
   return store.apps.has(handle);

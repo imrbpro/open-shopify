@@ -25,7 +25,7 @@ export const FONT_STACKS: Record<ThemeFont, string> = {
 };
 
 export const DEFAULT_THEME: ThemeConfig = {
-  preset: "dawn",
+  preset: "classic",
   colors: {
     primary: "#0f766e",
     background: "#ffffff",
@@ -40,7 +40,7 @@ export const DEFAULT_THEME: ThemeConfig = {
     heading: "Everyday goods, made to last.",
     subheading: "Thoughtfully designed essentials for home and away, built with materials that age well.",
     ctaLabel: "Shop all",
-    image: "/images/hero-dawn.svg"
+    image: "/images/hero-classic.svg"
   },
   announcement: { enabled: true, text: "Free shipping on orders over $75" },
   footer: { text: "Timeless essentials, responsibly made." },
@@ -52,11 +52,11 @@ export const DEFAULT_THEME: ThemeConfig = {
 };
 
 export const THEME_PRESETS: Record<string, { name: string; config: ThemeConfig }> = {
-  dawn: { name: "Dawn", config: DEFAULT_THEME },
-  spotlight: {
-    name: "Spotlight",
+  classic: { name: "Classic", config: DEFAULT_THEME },
+  noir: {
+    name: "Noir",
     config: {
-      preset: "spotlight",
+      preset: "noir",
       colors: {
         primary: "#e11d48",
         background: "#0b0b0f",
@@ -68,10 +68,10 @@ export const THEME_PRESETS: Record<string, { name: string; config: ThemeConfig }
       },
       fonts: { heading: "serif", body: "sans" },
       hero: {
-        heading: "Make a statement.",
+        heading: "After dark, dress sharp.",
         subheading: "Limited-run pieces for people who dress like they mean it. Small batches, no restocks.",
         ctaLabel: "Shop the drop",
-        image: "/images/hero-spotlight.svg"
+        image: "/images/hero-noir.svg"
       },
       announcement: { enabled: true, text: "New drop live now — free express shipping over $150" },
       footer: { text: "Small batches. No restocks. No regrets." },
@@ -82,10 +82,10 @@ export const THEME_PRESETS: Record<string, { name: string; config: ThemeConfig }
       ]
     }
   },
-  organic: {
-    name: "Organic",
+  meadow: {
+    name: "Meadow",
     config: {
-      preset: "organic",
+      preset: "meadow",
       colors: {
         primary: "#4d7c0f",
         background: "#fbfaf5",
@@ -100,13 +100,100 @@ export const THEME_PRESETS: Record<string, { name: string; config: ThemeConfig }
         heading: "Grown close to home.",
         subheading: "Seasonal pantry and garden goods sourced from small farms within 100 miles.",
         ctaLabel: "Browse the harvest",
-        image: "/images/hero-organic.svg"
+        image: "/images/hero-meadow.svg"
       },
       announcement: { enabled: true, text: "Free local delivery every Friday" },
       footer: { text: "Good things grow slowly." },
       nav: [
         { label: "Shop", href: "/collections/all" },
         { label: "Our farms", href: "/pages/about" },
+        { label: "Journal", href: "/blog" }
+      ]
+    }
+  },
+  mono: {
+    name: "Mono",
+    config: {
+      preset: "mono",
+      colors: {
+        primary: "#111111",
+        background: "#f7f7f5",
+        surface: "#efefec",
+        text: "#111111",
+        muted: "#6b6b6b",
+        border: "#d9d9d4",
+        accent: "#e4e4df"
+      },
+      fonts: { heading: "mono", body: "sans" },
+      hero: {
+        heading: "Less, but better.",
+        subheading: "A tightly edited collection of useful objects. No noise, no filler, no seasonal churn.",
+        ctaLabel: "View the edit",
+        image: "/images/hero-mono.svg"
+      },
+      announcement: { enabled: false, text: "" },
+      footer: { text: "Useful things, considered carefully." },
+      nav: [
+        { label: "Shop", href: "/collections/all" },
+        { label: "About", href: "/pages/about" },
+        { label: "Contact", href: "/pages/contact" }
+      ]
+    }
+  },
+  coastal: {
+    name: "Coastal",
+    config: {
+      preset: "coastal",
+      colors: {
+        primary: "#0369a1",
+        background: "#fbfcfc",
+        surface: "#eef6f8",
+        text: "#0c2733",
+        muted: "#5b7480",
+        border: "#d6e4e9",
+        accent: "#d8f1f7"
+      },
+      fonts: { heading: "sans", body: "sans" },
+      hero: {
+        heading: "Salt air, slow days.",
+        subheading: "Sun-faded layers, woven carryalls and small comforts for weekends near the water.",
+        ctaLabel: "Shop the coast",
+        image: "/images/hero-coastal.svg"
+      },
+      announcement: { enabled: true, text: "Free shipping on orders over $75" },
+      footer: { text: "Made for the long way home." },
+      nav: [
+        { label: "Shop", href: "/collections/all" },
+        { label: "New arrivals", href: "/collections/new-arrivals" },
+        { label: "Journal", href: "/blog" }
+      ]
+    }
+  },
+  ember: {
+    name: "Ember",
+    config: {
+      preset: "ember",
+      colors: {
+        primary: "#b45309",
+        background: "#fffaf3",
+        surface: "#f9efe2",
+        text: "#2b1a0f",
+        muted: "#7f6754",
+        border: "#ebdcc8",
+        accent: "#fde8c8"
+      },
+      fonts: { heading: "serif", body: "sans" },
+      hero: {
+        heading: "Made for long evenings.",
+        subheading: "Warm ceramics, soft linen and honest pantry staples for the table you gather around.",
+        ctaLabel: "Gather with us",
+        image: "/images/hero-ember.svg"
+      },
+      announcement: { enabled: true, text: "Free shipping on orders over $75" },
+      footer: { text: "Good company, good food, good light." },
+      nav: [
+        { label: "Shop", href: "/collections/all" },
+        { label: "Our story", href: "/pages/about" },
         { label: "Journal", href: "/blog" }
       ]
     }

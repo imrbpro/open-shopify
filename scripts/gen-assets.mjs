@@ -143,7 +143,7 @@ for (const p of products) {
 
 const heroes = [
   {
-    file: "hero-dawn.svg",
+    file: "hero-classic.svg",
     bg1: "#d6ece6",
     bg2: "#f6f1e4",
     accent: "#0f766e",
@@ -153,7 +153,7 @@ const heroes = [
       <circle cx="1060" cy="480" r="110" fill="#0f766e" opacity=".25"/>`
   },
   {
-    file: "hero-spotlight.svg",
+    file: "hero-noir.svg",
     bg1: "#121218",
     bg2: "#2a0e18",
     accent: "#e11d48",
@@ -163,7 +163,7 @@ const heroes = [
       <rect x="1180" y="360" width="220" height="300" rx="16" fill="#e11d48" opacity=".2"/>`
   },
   {
-    file: "hero-organic.svg",
+    file: "hero-meadow.svg",
     bg1: "#f2eddc",
     bg2: "#e2ebd2",
     accent: "#4d7c0f",
@@ -172,6 +172,37 @@ const heroes = [
       <path d="M980 680 Q1080 380 1260 260" stroke="#4d7c0f" stroke-width="10" opacity=".35" fill="none"/>
       <path d="M1100 500 Q1180 470 1210 530 Q1130 560 1100 500 Z" fill="#65a30d" opacity=".4"/>
       <path d="M1150 420 Q1240 400 1270 460 Q1180 480 1150 420 Z" fill="#65a30d" opacity=".3"/>`
+  },
+  {
+    file: "hero-mono.svg",
+    bg1: "#f4f4f1",
+    bg2: "#dcdcd6",
+    accent: "#111111",
+    shapes: `<rect x="1010" y="230" width="390" height="390" rx="2" fill="#111111" opacity=".08"/>
+      <circle cx="1205" cy="425" r="145" fill="#111111" opacity=".12"/>
+      <path d="M1010 620 L1400 620" stroke="#111111" stroke-width="2" opacity=".3"/>
+      <path d="M1205 230 L1205 620" stroke="#111111" stroke-width="2" opacity=".2"/>
+      <rect x="1130" y="350" width="150" height="150" fill="#111111" opacity=".16"/>`
+  },
+  {
+    file: "hero-coastal.svg",
+    bg1: "#e7f4f7",
+    bg2: "#f7f1e4",
+    accent: "#0369a1",
+    shapes: `<circle cx="1260" cy="230" r="280" fill="#0369a1" opacity=".12"/>
+      <path d="M860 620 Q1080 520 1300 600 T1540 580" stroke="#0369a1" stroke-width="10" opacity=".24" fill="none"/>
+      <path d="M880 680 Q1100 590 1320 660 T1560 640" stroke="#0ea5e9" stroke-width="8" opacity=".18" fill="none"/>
+      <circle cx="1110" cy="420" r="160" fill="#7dd3fc" opacity=".22"/>`
+  },
+  {
+    file: "hero-ember.svg",
+    bg1: "#fbebd6",
+    bg2: "#f4d6c2",
+    accent: "#b45309",
+    shapes: `<circle cx="1240" cy="310" r="300" fill="#b45309" opacity=".14"/>
+      <circle cx="1070" cy="560" r="190" fill="#f97316" opacity=".12"/>
+      <path d="M980 690 Q1080 430 1190 610 Q1280 440 1380 690" stroke="#b45309" stroke-width="10" opacity=".22" fill="none"/>
+      <rect x="1160" y="380" width="210" height="290" rx="18" fill="#f59e0b" opacity=".14"/>`
   }
 ];
 

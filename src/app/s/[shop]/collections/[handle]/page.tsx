@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getStore } from "@/lib/storefront";
+import { getStore, isAppInstalled } from "@/lib/storefront";
 import { minVariantPrice, parseCollectionRules, productMatchesRules } from "@/lib/catalog";
 import { ProductCard } from "@/components/store/product-card";
 
@@ -150,7 +150,12 @@ export default async function CollectionPage({
       ) : (
         <div className="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((product) => (
-            <ProductCard key={product.handle} slug={shop.slug} product={product} />
+            <ProductCard
+              key={product.handle}
+              slug={shop.slug}
+              product={product}
+              showWishlist={isAppInstalled(store, "wishlist")}
+            />
           ))}
         </div>
       )}

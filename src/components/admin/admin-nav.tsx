@@ -33,10 +33,7 @@ const SECTIONS: NavSection[] = [
   },
   {
     section: "Settings",
-    items: [
-      { href: "/settings/general", label: "Settings", icon: "settings" },
-      { href: "/billing", label: "Plan & billing", icon: "billing" }
-    ]
+    items: [{ href: "/settings/general", label: "Settings", icon: "settings" }]
   }
 ];
 
@@ -88,7 +85,7 @@ export function AdminNav({ slug, role }: { slug: string; role: string }) {
         ))}
       </div>
       <div className="border-t border-white/10 px-5 py-3 text-[11px] text-slate-500">
-        open-shopify v1.0
+        OpenStore v1.0
       </div>
     </nav>
   );

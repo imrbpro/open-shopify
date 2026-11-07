@@ -31,7 +31,6 @@ model Shop {
   timezone        String         @default("UTC")
   createdAt       DateTime       @default(now())
   memberships     Membership[]
-  subscription    Subscription?
   products        Product[]
   collections     Collection[]
   customers       Customer[]
@@ -61,55 +60,6 @@ model Membership {
 
   @@unique([userId, shopId])
   @@index([shopId])
-}
-
-// ---------------------------------------------------------------------------
-// Billing
-// ---------------------------------------------------------------------------
-
-model Plan {
-  id              String         @id // starter | basic | shopify | advanced | plus
-  code            String         @unique
-  name            String
-  description     String
-  priceMonthly    Int // cents
-  trialDays       Int            @default(14)
-  productLimit    Int?
-  staffLimit      Int?
-  transactionFeeBps Int // third-party payment provider fee, basis points
-  cardRateBps     Int
-  cardFixedCents  Int
-  features        String // newline separated
-  sortOrder       Int            @default(0)
-  subscriptions   Subscription[]
-}
-
-model Subscription {
-  id                 String    @id @default(cuid())
-  shopId             String    @unique
-  planId             String
-  status             String    @default("TRIALING") // TRIALING | ACTIVE | CANCELLED | FROZEN
-  currentPeriodStart DateTime  @default(now())
-  currentPeriodEnd   DateTime
-  trialEndsAt        DateTime?
-  cancelledAt        DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  shop               Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  plan               Plan      @relation(fields: [planId], references: [id])
-  invoices           Invoice[]
-}
-
-model Invoice {
-  id             String       @id @default(cuid())
-  subscriptionId String
-  number         String       @unique
-  amount         Int
-  status         String       @default("PAID") // PAID | OPEN | VOID
-  periodStart    DateTime
-  periodEnd      DateTime
-  createdAt      DateTime     @default(now())
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +212,7 @@ model Order {
   discountCode        String?
   shippingMethod      String?
   paymentMethod       String?
+  paymentRef          String?
   note                String?
   shippingAddressJson String           @default("{}")
   createdAt           DateTime         @default(now())
@@ -359,7 +310,7 @@ model Theme {
   shopId     String
   name       String
   role       String   @default("UNPUBLISHED") // MAIN | UNPUBLISHED
-  preset     String   @default("dawn")
+  preset     String   @default("classic")
   configJson String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -522,14 +473,18 @@ model Event {
 }
 
 model EmailMessage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   shopId    String
   to        String
   subject   String
   body      String
-  kind      String   @default("order_confirmation")
-  createdAt DateTime @default(now())
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  kind      String    @default("order_confirmation")
+  status    String    @default("QUEUED") // QUEUED | SENT | OUTBOX | FAILED
+  provider  String    @default("outbox")
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
 }

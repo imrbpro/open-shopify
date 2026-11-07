@@ -8,8 +8,8 @@ export async function authenticateApiRequest(request: Request): Promise<ApiConte
   const bearer = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
   const token =
     bearer ||
-    (request.headers.get("x-open-shopify-access-token") ?? "").trim() ||
-    (request.headers.get("x-open-shopify-token") ?? "").trim();
+    (request.headers.get("x-openstore-access-token") ?? "").trim() ||
+    (request.headers.get("x-openstore-token") ?? "").trim();
   if (!token) return null;
 
   const key = await prisma.apiKey.findUnique({

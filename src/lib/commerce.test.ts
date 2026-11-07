@@ -7,9 +7,17 @@ import {
   validateDiscountCode,
   type DiscountLike
 } from "./discounts";
-import { formatBps, getPlanSeed, isWithinPlanLimit, planFeatures } from "./plans";
 import { minVariantPrice, parseCollectionRules, productMatchesRules } from "./catalog";
-import { parseThemeConfig, themeCssVars, DEFAULT_THEME } from "./theme";
+import {
+  DEFAULT_SETTINGS,
+  parseSettings,
+  serializeSetting,
+  PAYMENT_PROVIDERS,
+  EMAIL_PROVIDERS,
+  ANALYTICS_PROVIDERS
+} from "./settings-defaults";
+import { THEME_PRESETS, parseThemeConfig, themeCssVars, DEFAULT_THEME } from "./theme";
+import { BUILTIN_APPS } from "./apps";
 import { renderTemplate, slugify, parseTags, tagsToCsv } from "./utils";
 
 const NOW = new Date("2026-06-01T12:00:00Z");
@@ -113,21 +121,38 @@ describe("discounts", () => {
   });
 });
 
-describe("plans", () => {
-  it("enforces finite limits and allows unlimited", () => {
-    const starter = getPlanSeed("starter")!;
-    expect(isWithinPlanLimit(starter, "products", 99)).toBe(true);
-    expect(isWithinPlanLimit(starter, "products", 100)).toBe(false);
-    expect(isWithinPlanLimit(starter, "staff", 1)).toBe(false);
-    const plus = getPlanSeed("plus")!;
-    expect(isWithinPlanLimit(plus, "staff", 500)).toBe(true);
+describe("settings", () => {
+  it("ships with safe providers and integration defaults", () => {
+    expect(DEFAULT_SETTINGS.paymentProvider).toBe("simulated");
+    expect(DEFAULT_SETTINGS.emailProvider).toBe("outbox");
+    expect(DEFAULT_SETTINGS.analyticsProvider).toBe("none");
+    expect(PAYMENT_PROVIDERS).toContain("stripe");
+    expect(EMAIL_PROVIDERS).toContain("resend");
+    expect(ANALYTICS_PROVIDERS).toContain("plausible");
   });
 
-  it("exposes features and fee formatting", () => {
-    const basic = getPlanSeed("basic")!;
-    expect(planFeatures(basic).length).toBeGreaterThan(2);
-    expect(formatBps(290)).toBe("2.90%");
-    expect(formatBps(500)).toBe("5%");
+  it("rejects unknown provider values and parses typed settings", () => {
+    const parsed = parseSettings([
+      { key: "paymentProvider", value: "paypal" },
+      { key: "emailProvider", value: "resend" },
+      { key: "taxRatePct", value: "8.25" },
+      { key: "taxShipping", value: "true" },
+      { key: "newsletterEnabled", value: "false" }
+    ]);
+    expect(parsed.paymentProvider).toBe("simulated");
+    expect(parsed.emailProvider).toBe("resend");
+    expect(parsed.taxRatePct).toBe(8.25);
+    expect(parsed.taxShipping).toBe(true);
+    expect(parsed.newsletterEnabled).toBe(false);
+    expect(serializeSetting("taxShipping", true)).toBe("true");
+  });
+});
+
+describe("built-in apps", () => {
+  it("defines one app per storefront capability", () => {
+    const handles = BUILTIN_APPS.map((app) => app.handle);
+    expect(handles).toEqual(["product-reviews", "email-marketing", "wishlist", "recently-viewed"]);
+    expect(BUILTIN_APPS.every((app) => app.priceLabel === "Included")).toBe(true);
   });
 });
 
@@ -177,6 +202,13 @@ describe("theme", () => {
     const vars = themeCssVars(DEFAULT_THEME);
     expect(vars["--os-primary"]).toBe(DEFAULT_THEME.colors.primary);
     expect(vars["--os-font-heading"]).toContain("sans-serif");
+  });
+
+  it("ships six distinct original presets", () => {
+    expect(Object.keys(THEME_PRESETS)).toEqual(["classic", "noir", "meadow", "mono", "coastal", "ember"]);
+    expect(DEFAULT_THEME.preset).toBe("classic");
+    const heroes = new Set(Object.values(THEME_PRESETS).map((preset) => preset.config.hero.image));
+    expect(heroes.size).toBe(6);
   });
 });
 

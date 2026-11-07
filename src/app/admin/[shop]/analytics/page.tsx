@@ -147,7 +147,7 @@ export default async function AnalyticsPage({
           hint={`${orders.length} total orders in range`}
           icon={<Icon name="orders" />}
         />
-        <StatCard label="Avg. order value" value={formatMoney(aov, shop.currency)} icon={<Icon name="billing" />} />
+        <StatCard label="Avg. order value" value={formatMoney(aov, shop.currency)} icon={<Icon name="credit" />} />
         <StatCard
           label="Conversion"
           value={`${conversion}%`}

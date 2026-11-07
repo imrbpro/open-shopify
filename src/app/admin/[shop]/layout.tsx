@@ -4,9 +4,6 @@ import { logoutAction } from "@/server/actions/auth";
 import { Logo } from "@/components/logo";
 import { Icon } from "@/components/icons";
 import { AdminNav, MobileAdminNav } from "@/components/admin/admin-nav";
-import { StatusBadge } from "@/components/ui";
-import { daysBetween } from "@/lib/utils";
-import { formatBps } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +15,6 @@ export default async function AdminLayout({
   params: { shop: string };
 }) {
   const { shop, user, membership } = await requireShop(params.shop);
-  const subscription = shop.subscription;
-  const trialDaysLeft =
-    subscription?.status === "TRIALING" && subscription.trialEndsAt
-      ? daysBetween(new Date(), subscription.trialEndsAt)
-      : null;
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -45,9 +37,7 @@ export default async function AdminLayout({
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-white">{shop.name}</p>
-              <p className="truncate text-[11px] text-slate-400">
-                {subscription?.plan.name ?? "No plan"} plan
-              </p>
+              <p className="truncate text-[11px] text-slate-400">{shop.slug}</p>
             </div>
           </div>
         </div>
@@ -85,14 +75,8 @@ export default async function AdminLayout({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">{shop.name}</p>
-                <p className="hidden text-[11px] text-slate-500 sm:block">
-                  {subscription ? `${subscription.plan.name} plan` : "No subscription"}
-                  {subscription && subscription.plan.transactionFeeBps > 0
-                    ? ` · ${formatBps(subscription.plan.transactionFeeBps)} third-party fee`
-                    : ""}
-                </p>
+                <p className="hidden text-[11px] text-slate-500 sm:block">Store admin</p>
               </div>
-              {subscription ? <StatusBadge status={subscription.status} className="hidden sm:inline-flex" /> : null}
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/s/${shop.slug}`} target="_blank" className="btn btn-outline btn-sm">
@@ -107,31 +91,13 @@ export default async function AdminLayout({
               </div>
             </div>
           </div>
-          {membership.role === "OWNER" && subscription?.status === "TRIALING" && trialDaysLeft !== null ? (
-            <div className="border-t border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-800 lg:px-8">
-              <span className="font-semibold">Free trial:</span> {trialDaysLeft} day
-              {trialDaysLeft === 1 ? "" : "s"} left.{" "}
-              <Link href={`/admin/${shop.slug}/billing`} className="font-semibold underline">
-                Review plans
-              </Link>
-            </div>
-          ) : null}
-          {subscription?.status === "CANCELLED" ? (
-            <div className="border-t border-red-100 bg-red-50 px-4 py-2 text-xs text-red-800 lg:px-8">
-              <span className="font-semibold">Subscription cancelled.</span> Your storefront is
-              offline and checkout is disabled.{" "}
-              <Link href={`/admin/${shop.slug}/billing`} className="font-semibold underline">
-                Reactivate
-              </Link>
-            </div>
-          ) : null}
         </header>
         <MobileAdminNav slug={shop.slug} role={membership.role} />
         <main className="mx-auto w-full max-w-[1240px] px-4 py-6 lg:px-8">
           {children}
         </main>
         <div className="px-4 pb-6 text-center text-[11px] text-slate-400 lg:px-8">
-          open-shopify · an open reverse-engineering of modern commerce
+          OpenStore · free, open-source commerce
         </div>
       </div>
     </div>

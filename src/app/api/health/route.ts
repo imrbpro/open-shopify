@@ -12,7 +12,7 @@ export async function GET(): Promise<Response> {
   return Response.json(
     {
       status: database === "ok" ? "ok" : "degraded",
-      app: "open-shopify",
+      app: "openstore",
       database,
       time: new Date().toISOString()
     },

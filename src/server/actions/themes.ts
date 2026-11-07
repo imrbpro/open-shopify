@@ -50,7 +50,9 @@ export async function updateThemeSettings(formData: FormData): Promise<void> {
   const presetKey = THEME_PRESETS[text(formData, "preset")]
     ? text(formData, "preset")
     : theme.preset;
-  const base = JSON.parse(JSON.stringify(THEME_PRESETS[presetKey]?.config ?? THEME_PRESETS.dawn.config)) as ThemeConfig;
+  const base = JSON.parse(
+    JSON.stringify(THEME_PRESETS[presetKey]?.config ?? THEME_PRESETS.classic.config)
+  ) as ThemeConfig;
 
   const config: ThemeConfig = {
     ...base,

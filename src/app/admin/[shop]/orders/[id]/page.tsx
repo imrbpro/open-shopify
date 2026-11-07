@@ -42,7 +42,9 @@ export default async function OrderDetailPage({
   const refunded = order.refunds.reduce((sum, refund) => sum + refund.amount, 0);
   const remaining = order.total - refunded;
   const canRefund = remaining > 0 && !["CANCELLED", "PENDING"].includes(order.financialStatus);
-  const canCancel = order.fulfillmentStatus !== "FULFILLED" && order.financialStatus !== "CANCELLED";
+  const canCancel =
+    order.fulfillmentStatus !== "FULFILLED" &&
+    ["PENDING", "AUTHORIZED"].includes(order.financialStatus);
   const canFulfill =
     order.fulfillmentStatus !== "FULFILLED" && order.financialStatus !== "CANCELLED";
   const base = `/admin/${shop.slug}`;
@@ -390,7 +392,7 @@ export default async function OrderDetailPage({
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">
               <h2 className="text-sm font-semibold text-red-800">Cancel order</h2>
               <p className="mt-1 text-xs text-red-700">
-                Cancelling restocks inventory and marks the order cancelled.
+                Cancelling an unpaid order restocks inventory and releases its discount usage.
               </p>
               <form action={cancelOrder} className="mt-2">
                 <input type="hidden" name="shopSlug" value={shop.slug} />

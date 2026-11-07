@@ -91,22 +91,23 @@ export default async function ApiSettingsPage({
       <div className="card card-pad mt-4">
         <h2 className="section-title">Admin API quickstart</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Send your key in the <code className="kbd">X-Open-Shopify-Access-Token</code> header.
+          Send your key in the <code className="kbd">Authorization: Bearer</code> header or with{" "}
+          <code className="kbd">X-OpenStore-Access-Token</code>.
         </p>
         <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 font-mono text-[11px] leading-relaxed text-slate-200">
 {`# List products
 curl "http://localhost:3000/api/v1/products?limit=5" \\
-  -H "X-Open-Shopify-Access-Token: <your-key>"
+  -H "X-OpenStore-Access-Token: <your-key>"
 
 # Create a product
 curl -X POST "http://localhost:3000/api/v1/products" \\
-  -H "X-Open-Shopify-Access-Token: <your-key>" \\
+  -H "X-OpenStore-Access-Token: <your-key>" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"New product","variants":[{"title":"Default","price":1900,"inventoryQty":10}]}'
 
 # List orders
 curl "http://localhost:3000/api/v1/orders?status=paid" \\
-  -H "X-Open-Shopify-Access-Token: <your-key>"`}
+  -H "X-OpenStore-Access-Token: <your-key>"`}
         </pre>
       </div>
     </div>

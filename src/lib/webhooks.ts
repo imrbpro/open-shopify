@@ -51,8 +51,8 @@ export async function dispatchWebhooks(
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-open-shopify-topic": topic,
-            "x-open-shopify-hmac-sha256": signPayload(payload, hook.secret)
+            "x-openstore-topic": topic,
+            "x-openstore-hmac-sha256": signPayload(payload, hook.secret)
           },
           body: payload,
           signal: AbortSignal.timeout(5000)

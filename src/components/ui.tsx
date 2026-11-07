@@ -8,7 +8,6 @@ const STATUS_STYLES: Record<string, string> = {
   APPROVED: "bg-emerald-50 text-emerald-700 border border-emerald-200",
   PENDING: "bg-amber-50 text-amber-700 border border-amber-200",
   UNFULFILLED: "bg-amber-50 text-amber-700 border border-amber-200",
-  TRIALING: "bg-blue-50 text-blue-700 border border-blue-200",
   AUTHORIZED: "bg-blue-50 text-blue-700 border border-blue-200",
   DRAFT: "bg-slate-100 text-slate-600 border border-slate-200",
   ARCHIVED: "bg-slate-100 text-slate-600 border border-slate-200",
@@ -18,9 +17,11 @@ const STATUS_STYLES: Record<string, string> = {
   REFUNDED: "bg-slate-100 text-slate-600 border border-slate-200",
   VOIDED: "bg-red-50 text-red-700 border border-red-200",
   CANCELLED: "bg-red-50 text-red-700 border border-red-200",
-  FROZEN: "bg-red-50 text-red-700 border border-red-200",
   OPEN: "bg-amber-50 text-amber-700 border border-amber-200",
   SUCCESS: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  SENT: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  OUTBOX: "bg-blue-50 text-blue-700 border border-blue-200",
+  QUEUED: "bg-amber-50 text-amber-700 border border-amber-200",
   FAILED: "bg-red-50 text-red-700 border border-red-200"
 };
 
@@ -121,6 +122,7 @@ export function SettingsTabs({ slug, active }: { slug: string; active: string })
   const tabs = [
     { key: "general", label: "General" },
     { key: "checkout", label: "Checkout" },
+    { key: "integrations", label: "Integrations" },
     { key: "notifications", label: "Notifications" },
     { key: "users", label: "Users & permissions" },
     { key: "api", label: "API keys" },

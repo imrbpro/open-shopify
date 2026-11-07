@@ -105,13 +105,13 @@ export default async function DashboardPage({
     },
     {
       done: installedApps.length > 0,
-      label: "Install an app from the app store",
+      label: "Enable a built-in app",
       href: `/admin/${shop.slug}/apps`
     },
     {
-      done: membership.role !== "OWNER" || shop.subscription?.status === "ACTIVE",
-      label: "Review your plan and trial",
-      href: `/admin/${shop.slug}/billing`
+      done: settings.paymentProvider !== "simulated" && settings.emailProvider !== "outbox",
+      label: "Connect payments and email",
+      href: `/admin/${shop.slug}/settings/integrations`
     }
   ];
   const remainingSteps = setupSteps.filter((step) => !step.done);
@@ -152,7 +152,7 @@ export default async function DashboardPage({
           label="Average order"
           value={formatMoney(aov, shop.currency)}
           hint="Net sales ÷ paid orders"
-          icon={<Icon name="billing" />}
+          icon={<Icon name="credit" />}
         />
         <StatCard
           label="Conversion"

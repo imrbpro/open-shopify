@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Icon, type IconName } from "@/components/icons";
-import { PLAN_SEEDS, planFeatures } from "@/lib/plans";
-import { formatMoney } from "@/lib/money";
 
 const FEATURES: { icon: IconName; title: string; body: string }[] = [
   {
@@ -13,22 +11,22 @@ const FEATURES: { icon: IconName; title: string; body: string }[] = [
   {
     icon: "orders",
     title: "Orders end to end",
-    body: "Checkout creates real orders with payments, tax, discounts and shipping. Fulfill, refund, cancel and print packing slips."
+    body: "Checkout creates real orders with tax, discounts and shipping. Fulfill, refund, cancel and print packing slips."
   },
   {
     icon: "store",
-    title: "Themeable storefront",
-    body: "Every store gets its own themed storefront with hero, collections, product pages, search, blog, cart and checkout."
+    title: "Six original themes",
+    body: "Classic, Noir, Meadow, Mono, Coastal and Ember. Each ships with its own palette, typography, copy and artwork."
   },
   {
-    icon: "billing",
-    title: "Plans, trials & billing",
-    body: "Five tiers with trial periods, invoices, usage limits for products and staff, and plan-aware transaction pricing."
+    icon: "credit",
+    title: "Bring your own payments",
+    body: "Start with simulated checkout, switch to manual bank transfer, connect Stripe Checkout, or plug in a custom provider with signed webhooks."
   },
   {
     icon: "apps",
-    title: "Apps that extend the UI",
-    body: "Install apps that change storefront behavior — reviews, newsletter capture, chat and inventory integrations."
+    title: "Useful built-in apps",
+    body: "Product reviews, email marketing, wishlist and recently viewed are included with every store — no marketplace account required."
   },
   {
     icon: "globe",
@@ -39,7 +37,7 @@ const FEATURES: { icon: IconName; title: string; body: string }[] = [
 
 const CHECKLIST = [
   "Multi-tenant shops with path-based storefronts",
-  "Owner and staff roles with plan-enforced seats",
+  "Owner and staff roles",
   "Guest checkout with shipping and tax calc",
   "Percentage, fixed and free-shipping discounts",
   "Automated collections by type, vendor, tag or price",
@@ -47,9 +45,39 @@ const CHECKLIST = [
   "Customer profiles, addresses and spend history",
   "Theme editor with presets and live preview",
   "Blog, pages and storefront search",
-  "Signed webhooks with HMAC and retries log",
+  "Signed webhooks with HMAC and a delivery log",
   "REST API tokens with product and order scopes",
-  "Freeze store when subscription is cancelled"
+  "Self-hosting with Docker and SQLite or Postgres"
+];
+
+const THEMES = [
+  { name: "Classic", colors: ["#ffffff", "#f8fafc", "#0f766e", "#0f172a"], note: "Calm, editorial, built for everyday goods." },
+  { name: "Noir", colors: ["#0b0b0f", "#16161d", "#e11d48", "#f5f5f7"], note: "High contrast for limited-run drops." },
+  { name: "Meadow", colors: ["#fbfaf5", "#f3f1e8", "#4d7c0f", "#1c2a1f"], note: "Warm and natural for pantry and garden." },
+  { name: "Mono", colors: ["#f7f7f5", "#ffffff", "#111111", "#525252"], note: "Swiss restraint for design-led brands." },
+  { name: "Coastal", colors: ["#f4f9fb", "#e8f2f6", "#0e7490", "#0f2a33"], note: "Airy blues for travel and outdoor." },
+  { name: "Ember", colors: ["#fffaf5", "#fdf0e6", "#c2410c", "#2b1a12"], note: "Rich warmth for food and craft." }
+];
+
+const INTEGRATIONS = [
+  {
+    icon: "credit" as IconName,
+    title: "Payments",
+    options: "Simulated · Manual · Stripe · Custom",
+    body: "Every order is created as pending, then marked paid only when the provider confirms. Stripe Checkout and custom redirects share one signed return flow."
+  },
+  {
+    icon: "sparkle" as IconName,
+    title: "Email",
+    options: "Outbox · Resend · Custom webhook",
+    body: "Confirmation and shipping emails go through your provider with an inspectable delivery log. Start with the outbox and switch when you are ready."
+  },
+  {
+    icon: "chart" as IconName,
+    title: "Analytics",
+    options: "GA4 · GTM · Plausible · Custom",
+    body: "Drop in a traffic tag without touching the theme. Internal product, checkout and order events are always recorded in the admin."
+  }
 ];
 
 export default function LandingPage() {
@@ -64,8 +92,11 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-slate-900">
               Features
             </a>
-            <a href="#pricing" className="hover:text-slate-900">
-              Pricing
+            <a href="#themes" className="hover:text-slate-900">
+              Themes
+            </a>
+            <a href="#integrations" className="hover:text-slate-900">
+              Integrations
             </a>
             <Link href="/s/demo" className="hover:text-slate-900">
               Demo store
@@ -79,7 +110,7 @@ export default function LandingPage() {
               Log in
             </Link>
             <Link href="/signup" className="btn btn-primary">
-              Start free trial
+              Create your store
             </Link>
           </div>
         </div>
@@ -92,18 +123,18 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl text-center">
             <span className="badge border border-emerald-400/30 bg-emerald-400/10 text-emerald-300">
               <Icon name="sparkle" className="h-3.5 w-3.5" />
-              Reverse Engineering Analysis → working platform
+              Open source · self-hosted · yours to own
             </span>
             <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
-              The open-source Shopify,
+              Commerce software
               <span className="block bg-gradient-to-r from-emerald-300 via-teal-200 to-sky-300 bg-clip-text text-transparent">
-                reconstructed from the outside in.
+                you can actually own.
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              open-shopify reimplements the observable behavior of a modern commerce platform:
-              multi-tenant admin, storefront, checkout, themes, apps, discounts, payments,
-              webhooks, API and plan-based billing — in one TypeScript codebase.
+              OpenStore is an independent commerce platform with a multi-tenant admin, six original
+              themes, provider-agnostic payments and email, built-in marketing apps, a REST API and
+              signed webhooks — in one TypeScript codebase.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/signup" className="btn btn-primary px-5 py-2.5 text-[15px]">
@@ -130,7 +161,7 @@ export default function LandingPage() {
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
                 <span className="ml-3 rounded bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
-                  open-shopify / admin / demo
+                  openstore / admin / demo
                 </span>
               </div>
               <div className="grid gap-4 p-4 sm:grid-cols-[168px_1fr] sm:p-5">
@@ -143,7 +174,7 @@ export default function LandingPage() {
                     ["Customers", false],
                     ["Discounts", false],
                     ["Analytics", false],
-                    ["Plan & billing", false]
+                    ["Apps", false]
                   ].map(([label, active]) => (
                     <div
                       key={String(label)}
@@ -189,13 +220,15 @@ export default function LandingPage() {
 
       <section id="features" className="mx-auto max-w-6xl px-4 py-20">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Feature parity</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+            Everything in one codebase
+          </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
             The parts of commerce that actually matter
           </h2>
           <p className="mt-3 text-slate-600">
-            Reverse-engineered from public product behavior, then rebuilt as a coherent,
-            database-backed application — not a UI mockup.
+            A database-backed application you can run, extend and deploy — not a mockup and not a
+            per-seat subscription.
           </p>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -214,15 +247,14 @@ export default function LandingPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr] lg:items-center">
             <div>
               <h3 className="text-2xl font-semibold tracking-tight text-slate-900">
-                “All things plans” is included
+                No plans. No seats. No billing module.
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Starter, Basic, Shopify, Advanced and Plus tiers are first-class data, not marketing
-                copy. Plans gate product counts and staff seats, drive transaction-fee metadata,
-                generate invoices and support trials, upgrades, cancellations and store freezing.
+                OpenStore does not ship a subscription engine, because it does not need one. Every
+                feature is available to every store, and you decide how to host and support it.
               </p>
-              <Link href="#pricing" className="admin-link mt-4 inline-flex items-center gap-1">
-                See the plan matrix <Icon name="arrow-left" className="h-4 w-4 rotate-180" />
+              <Link href="#integrations" className="admin-link mt-4 inline-flex items-center gap-1">
+                See the integration model <Icon name="arrow-left" className="h-4 w-4 rotate-180" />
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
@@ -237,65 +269,99 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="pricing" className="border-t border-slate-200 bg-slate-50 py-20">
+      <section id="themes" className="border-t border-slate-200 bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Plans & billing</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Themes</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-              Simple plans, fully enforced in code
+              Six starting points, zero lookalikes
             </h2>
             <p className="mt-3 text-slate-600">
-              Every plan starts with a 14-day free trial. Prices mirror the reverse-engineered
-              public plan ladder; transaction fees describe third-party payment providers.
+              Each preset pairs its own palette, type, hero artwork and default copy. Duplicate any
+              theme and make it yours in the editor.
             </p>
           </div>
-          <div className="mt-12 grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-            {PLAN_SEEDS.map((plan) => {
-              const featured = plan.code === "shopify";
-              return (
-                <div
-                  key={plan.code}
-                  className={`relative flex flex-col rounded-2xl border p-5 ${
-                    featured
-                      ? "border-emerald-600 bg-white shadow-lg shadow-emerald-600/10 ring-1 ring-emerald-600"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  {featured ? (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-0.5 text-[11px] font-semibold text-white">
-                      Most popular
-                    </span>
-                  ) : null}
-                  <h3 className="text-sm font-semibold text-slate-900">{plan.name}</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-semibold tracking-tight text-slate-900">
-                      {formatMoney(plan.priceMonthly)}
-                    </span>
-                    <span className="text-xs text-slate-500">/mo</span>
-                  </div>
-                  <p className="mt-1.5 min-h-[48px] text-xs leading-relaxed text-slate-500">{plan.description}</p>
-                  <ul className="mt-4 flex-1 space-y-2">
-                    {planFeatures({ features: plan.features.join("\n") }).map((feature) => (
-                      <li key={feature} className="flex items-start gap-1.5 text-xs text-slate-600">
-                        <Icon name="check" className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={`/signup?plan=${plan.code}`}
-                    className={`btn mt-5 w-full ${featured ? "btn-primary" : "btn-outline"}`}
-                  >
-                    Start free trial
-                  </Link>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {THEMES.map((theme) => (
+              <div key={theme.name} className="card overflow-hidden">
+                <div className="grid h-24 grid-cols-4">
+                  {theme.colors.map((color) => (
+                    <div key={color} style={{ background: color }} />
+                  ))}
                 </div>
-              );
-            })}
+                <div className="p-5">
+                  <h3 className="text-sm font-semibold text-slate-900">{theme.name}</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{theme.note}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Online card rates vary by plan (2.9% + 30¢ → 2.15% + 30¢). Third-party transaction fees
-            range from 5% to 0.15%. Taxes and local legal requirements are out of scope for this study.
+        </div>
+      </section>
+
+      <section id="integrations" className="mx-auto max-w-6xl px-4 py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+            Integrations
           </p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            Your providers, your credentials
+          </h2>
+          <p className="mt-3 text-slate-600">
+            Configure payments, email delivery and analytics from the admin. Keys stay in your own
+            database and are never sent anywhere except the provider you choose.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          {INTEGRATIONS.map((integration) => (
+            <div key={integration.title} className="card card-pad">
+              <div className="flex items-center gap-3">
+                <div className="inline-flex rounded-lg bg-slate-900 p-2.5 text-white">
+                  <Icon name={integration.icon} className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">{integration.title}</h3>
+                  <p className="text-[11px] font-medium text-emerald-700">{integration.options}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-600">{integration.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-slate-50 py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Apps</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+                Included, not upsold
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                Reviews, email capture, wishlists and recently viewed are implemented as built-in
+                storefront capabilities. Install or remove them per store from the admin, and edit
+                the source when your store needs something different.
+              </p>
+              <Link href="/admin/demo/apps" className="admin-link mt-4 inline-flex items-center gap-1">
+                Browse the demo apps <Icon name="arrow-left" className="h-4 w-4 rotate-180" />
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["heart", "Wishlist", "Save products in the browser and revisit them from a dedicated page."],
+                ["star", "Product Reviews", "Star ratings, customer reviews and a review form on every product."],
+                ["orders", "Email Marketing", "Newsletter signup capture in the storefront footer."],
+                ["search", "Recently Viewed", "A browsing-history rail on product pages and the home page."]
+              ].map(([icon, title, body]) => (
+                <div key={title} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <Icon name={icon as IconName} className="h-4 w-4 text-emerald-700" />
+                  <p className="mt-2 text-sm font-semibold text-slate-900">{title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -305,7 +371,7 @@ export default function LandingPage() {
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Kick the tires in 30 seconds</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               The seeded demo store includes 12 products, 11 orders across every status, 8 customers,
-              4 discounts, 3 themes, reviews, blog posts, invoices, an API token and webhook
+              4 discounts, 6 themes, 4 built-in apps, reviews, blog posts, an API token and webhook
               configuration. Log in as the owner or staff to see role isolation.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -327,14 +393,15 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="rounded-xl bg-slate-950 p-5 text-slate-300">
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Why build this?</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Why OpenStore?</p>
             <p className="mt-2 text-sm leading-relaxed">
-              A reverse engineering analysis (REA) of Shopify&apos;s observable product surfaces —
-              admin IA, checkout, pricing ladder, API and theme model — turned into an executable
-              specification and an independent implementation.
+              Commerce platforms should be inspectable, portable and affordable to operate. OpenStore
+              is a complete reference implementation of the core merchant workflow, with clean
+              extension points for the services only you can choose.
             </p>
             <p className="mt-3 text-xs text-slate-500">
-              Docs live in <span className="font-mono text-slate-400">docs/REA.md</span> and{" "}
+              Self-hosting and architecture docs live in{" "}
+              <span className="font-mono text-slate-400">docs/</span> and{" "}
               <span className="font-mono text-slate-400">README.md</span>.
             </p>
           </div>
@@ -345,7 +412,10 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-slate-500">
           <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <span className="text-xs">A reverse-engineering educational project. Not affiliated with Shopify Inc.</span>
+            <span className="max-w-md text-xs">
+              An independent open-source commerce platform. Not affiliated with Shopify Inc. or any
+              other commerce provider.
+            </span>
           </div>
           <div className="flex items-center gap-5 text-xs">
             <Link href="/s/demo" className="hover:text-slate-900">

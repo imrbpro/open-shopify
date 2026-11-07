@@ -20,9 +20,11 @@ type ShippingAddress = {
 };
 
 export default async function ThankYouPage({
-  params
+  params,
+  searchParams
 }: {
   params: { shop: string; number: string };
+  searchParams?: { cancelled?: string };
 }) {
   const store = await getStore(params.shop);
   const number = Number(params.number);
@@ -35,26 +37,40 @@ export default async function ThankYouPage({
   if (!order) notFound();
 
   const address = jsonObject<ShippingAddress>(order.shippingAddressJson, {});
+  const cancelled = order.financialStatus === "CANCELLED" || searchParams?.cancelled === "1";
   const pending = order.financialStatus === "PENDING";
 
   return (
     <div className="mx-auto max-w-2xl">
       <ClearCart />
       <div className="text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white">
-          <Icon name="check" className="h-7 w-7" />
+        <div
+          className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white ${
+            cancelled ? "bg-slate-700" : "bg-emerald-600"
+          }`}
+        >
+          <Icon name={cancelled ? "x" : "check"} className="h-7 w-7" />
         </div>
         <h1 className="store-heading mt-5 text-3xl font-semibold">
-          {pending ? "Order received" : "Thank you for your order"}
+          {cancelled
+            ? "Payment cancelled"
+            : pending
+              ? "Order received"
+              : "Thank you for your order"}
         </h1>
         <p className="mt-2 text-sm store-muted">
-          Order <span className="font-semibold">#{order.number}</span> · Confirmation sent to{" "}
-          <span className="font-medium">{order.email}</span>
+          Order <span className="font-semibold">#{order.number}</span> ·{" "}
+          {cancelled ? "No payment was taken." : "Confirmation sent to "}
+          {cancelled ? null : <span className="font-medium">{order.email}</span>}
         </p>
-        {pending ? (
+        {cancelled ? (
+          <p className="mx-auto mt-3 max-w-md rounded-lg bg-slate-100 px-4 py-2.5 text-xs text-slate-600">
+            This order was cancelled. Any reserved stock has been returned to the store.
+          </p>
+        ) : pending ? (
           <p className="mx-auto mt-3 max-w-md rounded-lg bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
-            Your order is awaiting manual payment. We&apos;ll email instructions and mark it paid once
-            funds clear.
+            Your order is awaiting payment confirmation. We&apos;ll email you as soon as the payment
+            is confirmed.
           </p>
         ) : null}
       </div>

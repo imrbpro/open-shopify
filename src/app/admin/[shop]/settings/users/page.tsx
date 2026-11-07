@@ -20,8 +20,6 @@ export default async function UsersSettingsPage({
     include: { user: true },
     orderBy: { createdAt: "asc" }
   });
-  const staffLimit = shop.subscription?.plan.staffLimit ?? null;
-
   return (
     <div>
       <PageHeader title="Users & permissions" subtitle="People who can access this store's admin." />
@@ -37,9 +35,7 @@ export default async function UsersSettingsPage({
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
             <div>
               <h2 className="section-title">Team members</h2>
-              <p className="text-xs text-slate-500">
-                {memberships.length} of {staffLimit ?? "unlimited"} seats used
-              </p>
+              <p className="text-xs text-slate-500">{memberships.length} team members</p>
             </div>
           </div>
           <table className="w-full">
@@ -86,8 +82,7 @@ export default async function UsersSettingsPage({
         <div className="card card-pad">
           <h2 className="section-title">Invite staff</h2>
           <p className="mb-4 text-xs text-slate-500">
-            Staff can manage products, orders, customers and content. Only owners can access settings
-            and billing.
+            Staff can manage products, orders, customers and content. Only owners can access settings.
           </p>
           <form action={inviteStaff} className="space-y-3">
             <input type="hidden" name="shopSlug" value={shop.slug} />
@@ -129,12 +124,6 @@ export default async function UsersSettingsPage({
               Add staff member
             </button>
           </form>
-          {staffLimit !== null ? (
-            <p className="mt-3 rounded-lg bg-slate-50 p-2.5 text-[11px] leading-relaxed text-slate-500">
-              The {shop.subscription?.plan.name} plan includes {staffLimit} seat
-              {staffLimit === 1 ? "" : "s"}. Upgrade to add more teammates.
-            </p>
-          ) : null}
         </div>
       </div>
     </div>

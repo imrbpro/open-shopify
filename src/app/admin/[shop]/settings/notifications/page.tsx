@@ -2,7 +2,7 @@ import { requireShop } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getShopSettings } from "@/lib/settings";
 import { updateNotificationSettings } from "@/server/actions/settings";
-import { Banner, PageHeader, SettingsTabs } from "@/components/ui";
+import { Banner, PageHeader, SettingsTabs, StatusBadge } from "@/components/ui";
 import { timeAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,10 @@ export default async function NotificationSettingsPage({
 
   return (
     <div>
-      <PageHeader title="Notifications" subtitle="Customer emails sent by your store." />
+      <PageHeader
+        title="Notifications"
+        subtitle={`Customer emails sent by your store via ${settings.emailProvider}.`}
+      />
       <SettingsTabs slug={shop.slug} active="notifications" />
 
       <div className="space-y-4">
@@ -117,9 +120,10 @@ export default async function NotificationSettingsPage({
 
       <div className="card mt-6 overflow-hidden">
         <div className="border-b border-slate-200 px-5 py-3.5">
-          <h2 className="section-title">Email outbox</h2>
+          <h2 className="section-title">Delivery log</h2>
           <p className="text-xs text-slate-500">
-            Emails are captured here instead of being delivered to a real inbox in this demo.
+            Every email is recorded here with its provider and delivery status. Configure delivery in
+            Settings → Integrations.
           </p>
         </div>
         <table className="w-full">
@@ -128,7 +132,8 @@ export default async function NotificationSettingsPage({
               <th className="th">Recipient</th>
               <th className="th">Subject</th>
               <th className="th">Type</th>
-              <th className="th text-right">Sent</th>
+              <th className="th">Status</th>
+              <th className="th text-right">Created</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -144,12 +149,23 @@ export default async function NotificationSettingsPage({
                   </details>
                 </td>
                 <td className="td text-xs text-slate-500">{email.kind.replaceAll("_", " ")}</td>
+                <td className="td">
+                  <StatusBadge status={email.status} />
+                  <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
+                    {email.provider}
+                  </p>
+                  {email.error ? (
+                    <p className="mt-1 max-w-[200px] text-[10px] leading-relaxed text-red-600">
+                      {email.error}
+                    </p>
+                  ) : null}
+                </td>
                 <td className="td text-right text-xs text-slate-500">{timeAgo(email.createdAt)}</td>
               </tr>
             ))}
             {emails.length === 0 ? (
               <tr>
-                <td className="td text-slate-500" colSpan={4}>
+                <td className="td text-slate-500" colSpan={5}>
                   No emails sent yet. Place a test order from the storefront.
                 </td>
               </tr>

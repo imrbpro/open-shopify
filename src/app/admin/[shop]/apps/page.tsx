@@ -2,7 +2,6 @@ import { requireShop } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { installApp, uninstallApp } from "@/server/actions/apps";
 import { Banner, PageHeader, StatusBadge } from "@/components/ui";
-import { Icon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +14,7 @@ export default async function AppsPage({
 }) {
   const { shop } = await requireShop(params.shop);
   const [apps, installations] = await Promise.all([
-    prisma.app.findMany({ orderBy: { installs: "desc" } }),
+    prisma.app.findMany({ orderBy: { name: "asc" } }),
     prisma.appInstallation.findMany({ where: { shopId: shop.id } })
   ]);
   const installed = new Map(installations.map((installation) => [installation.appId, installation]));
@@ -24,7 +23,7 @@ export default async function AppsPage({
     <div>
       <PageHeader
         title="Apps"
-        subtitle={`${installations.length} installed · extend storefront and admin behavior`}
+        subtitle={`${installations.length} installed · built-in storefront features, free forever`}
       />
       {searchParams?.installed ? (
         <div className="mb-4">
@@ -75,18 +74,9 @@ export default async function AppsPage({
                     {capability}
                   </span>
                 ))}
-                <span className="badge bg-slate-100 text-slate-600">
-                  <Icon name="star" className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  {(app.rating / 10).toFixed(1)}
-                </span>
               </div>
               <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                <div>
-                  <p className="text-xs font-medium text-slate-700">{app.priceLabel}</p>
-                  <p className="text-[10px] text-slate-400">
-                    {app.installs >= 1000 ? `${Math.round(app.installs / 1000)}k installs` : `${app.installs} installs`}
-                  </p>
-                </div>
+                <p className="text-xs font-medium text-emerald-700">{app.priceLabel}</p>
                 {installation ? (
                   <form action={uninstallApp}>
                     <input type="hidden" name="shopSlug" value={shop.slug} />
@@ -111,11 +101,13 @@ export default async function AppsPage({
       </div>
 
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-slate-900">How app extensions work here</h2>
+        <h2 className="text-sm font-semibold text-slate-900">Built-in apps, no marketplace required</h2>
         <p className="mt-1 text-xs leading-relaxed text-slate-500">
-          Installations are checked at render time. Installing <strong>Judge.me Reviews</strong> adds
-          a review list and review form to product pages. Installing <strong>Klaviyo</strong> adds a
-          newsletter capture form to the storefront footer. Uninstalling removes both immediately.
+          These features ship with OpenStore and are checked at render time. Turn on{" "}
+          <strong>Product Reviews</strong> for review lists and forms, <strong>Email Marketing</strong>{" "}
+          for newsletter capture, <strong>Wishlist</strong> for saved items and{" "}
+          <strong>Recently Viewed</strong> for a browsing-history rail. Uninstalling removes the
+          storefront feature immediately.
         </p>
       </div>
     </div>

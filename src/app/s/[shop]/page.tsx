@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getStore } from "@/lib/storefront";
+import { getStore, isAppInstalled } from "@/lib/storefront";
 import { minVariantPrice } from "@/lib/catalog";
 import { formatDate } from "@/lib/utils";
 import { ProductCard } from "@/components/store/product-card";
 import { Icon } from "@/components/icons";
+import { RecentlyViewedRail } from "@/components/store/wishlist";
 
 export const dynamic = "force-dynamic";
 
 export default async function StoreHomePage({ params }: { params: { shop: string } }) {
   const store = await getStore(params.shop);
   const { shop, config } = store;
+  const wishlistApp = isAppInstalled(store, "wishlist");
+  const recentlyViewedApp = isAppInstalled(store, "recently-viewed");
 
   const [products, collections, posts, rates] = await Promise.all([
     prisma.product.findMany({
@@ -151,7 +154,12 @@ export default async function StoreHomePage({ params }: { params: { shop: string
         </div>
         <div className="grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((product) => (
-            <ProductCard key={product.handle} slug={shop.slug} product={product} />
+            <ProductCard
+              key={product.handle}
+              slug={shop.slug}
+              product={product}
+              showWishlist={wishlistApp}
+            />
           ))}
         </div>
       </section>
@@ -210,6 +218,8 @@ export default async function StoreHomePage({ params }: { params: { shop: string
           </div>
         </section>
       ) : null}
+
+      {recentlyViewedApp ? <RecentlyViewedRail slug={shop.slug} /> : null}
     </div>
   );
 }

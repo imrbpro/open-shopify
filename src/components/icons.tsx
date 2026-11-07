@@ -12,7 +12,6 @@ export type IconName =
   | "apps"
   | "chart"
   | "settings"
-  | "billing"
   | "plus"
   | "search"
   | "external"
@@ -28,6 +27,7 @@ export type IconName =
   | "credit"
   | "globe"
   | "users"
+  | "heart"
   | "sparkle";
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -98,13 +98,6 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
-    </>
-  ),
-  billing: (
-    <>
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path d="M2 10h20" />
-      <path d="M6 15h4" />
     </>
   ),
   plus: <path d="M12 5v14M5 12h14" />,
@@ -180,6 +173,9 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M2.5 21a6.5 6.5 0 0 1 13 0" />
       <path d="M16 5a3 3 0 0 1 0 6M17.5 14.5A5.5 5.5 0 0 1 22 20" />
     </>
+  ),
+  heart: (
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.8-7.7 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
   ),
   sparkle: (
     <>

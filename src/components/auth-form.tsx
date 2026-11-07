@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginAction, signupAction } from "@/server/actions/auth";
-import { PLAN_SEEDS } from "@/lib/plans";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -14,7 +13,7 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function AuthForm({ mode, plan }: { mode: "login" | "signup"; plan?: string }) {
+export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const action = mode === "login" ? loginAction : signupAction;
   const [state, formAction] = useFormState(action, undefined);
 
@@ -48,18 +47,6 @@ export function AuthForm({ mode, plan }: { mode: "login" | "signup"; plan?: stri
                 required
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="plan" className="label">
-              Plan
-            </label>
-            <select id="plan" name="plan" className="input" defaultValue={plan ?? "shopify"}>
-              {PLAN_SEEDS.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.name} — ${(p.priceMonthly / 100).toFixed(0)}/mo · {p.trialDays}-day trial
-                </option>
-              ))}
-            </select>
           </div>
         </>
       ) : null}
@@ -99,9 +86,9 @@ export function AuthForm({ mode, plan }: { mode: "login" | "signup"; plan?: stri
       <p className="text-center text-sm text-slate-500">
         {mode === "login" ? (
           <>
-            New to open-shopify?{" "}
+            New to OpenStore?{" "}
             <Link href="/signup" className="font-medium text-emerald-700 hover:underline">
-              Start your free trial
+              Create a store
             </Link>
           </>
         ) : (
@@ -115,7 +102,7 @@ export function AuthForm({ mode, plan }: { mode: "login" | "signup"; plan?: stri
       </p>
       {mode === "signup" ? (
         <p className="text-center text-xs text-slate-400">
-          No credit card required. Cancel anytime during your trial.
+          Free and open source. No platform fees, no credit card, no paid tiers.
         </p>
       ) : null}
     </form>
